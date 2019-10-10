@@ -440,18 +440,18 @@ if not (os.path.isfile("users.db")):
 	conn.close()
 	Logger("Created new user database, because users.db was missing.", CT.INFO)
 
-if not (os.path.isfile("matches.db")):
-	conn = sqlite3.connect('matches.db')
+if not (os.path.isfile("additional.db")):
+	conn = sqlite3.connect('additional.db')
 	c = conn.cursor()
-	c.execute('''CREATE TABLE matches
-             (creator text, actions text, party string, perfomance string, teamstats text)''')
+	c.execute('''CREATE TABLE crates
+             (item_code text, item_open_code text, items_in text)''')
 	conn.commit()
 	conn.close()
-	Logger("Created new match database, because matches.db was missing.", CT.INFO)
+	Logger("Created new additionals database, because additional.db was missing.", CT.INFO)
 
 if(platform.system() == "Windows"):
 	subprocess.check_call(["attrib","+H","users.db"])
-	subprocess.check_call(["attrib","+H","matches.db"])
+	subprocess.check_call(["attrib","+H","additional.db"])
 if(len(sys.argv) > 1 and sys.argv[1] == "debugger"):
 	while(True):
 		oprint('> ',end='')
