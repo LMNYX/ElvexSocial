@@ -207,6 +207,7 @@ def ListUsers():
 	a = c.execute("SELECT * FROM users")
 	for b in a:
 		print("- "+b[0])
+	conn.close()
 
 def BanUser(login):
 	"""Ban player from Elvex."""
