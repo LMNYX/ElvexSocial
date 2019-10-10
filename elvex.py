@@ -16,7 +16,8 @@ import elvex
 import inspect
 if(platform.system() == "Windows"):
 	import subprocess
-
+version = 3
+debugger_mode = False
 oprint = print
 ohelp = help
 if(platform.system() == "Windows"):
@@ -32,7 +33,7 @@ def help():
 			args = inspect.getfullargspec(val)[0]
 			args = ', '.join(args)
 			if(str(val.__doc__) == "None"):
-				print(name + "(" + args + ") - No description.")
+				print(name + "(" + args + ") - No description.", CT.INFO)
 			else:
 				print(name + "(" + args + ") - " + val.__doc__, CT.INFO)
 
@@ -441,6 +442,30 @@ def CreateCrate(item_code, key_item_code, loot_table):
 	conn.commit()
 	conn.close()
 	return "OK"
+
+def isCrate(item_code):
+	"""Checks if item is a crate or no."""
+	conn = sqlite3.connect('additional.db')
+	c = conn.cursor()
+	a = c.execute("SELECT * FROM crates WHERE item_code = '{}'".format(item_code))
+
+	if(a.fetchone()):
+		conn.commit()
+		conn.close()
+		return True
+	else:
+		conn.commit()
+		conn.close()
+		return False
+
+def About():
+	"""Get information about ELVEX SOCIAL"""
+	global debugger_mode
+	global version
+	if not debugger_mode:
+		return "FAILED"
+	print('Elvex SOCIAL v'+str(version))
+
 # Checking dbs
 
 if not (os.path.isfile("users.db")):
@@ -467,6 +492,8 @@ if(platform.system() == "Windows"):
 	subprocess.check_call(["attrib","+H","users.db"])
 	subprocess.check_call(["attrib","+H","additional.db"])
 if(len(sys.argv) > 1 and sys.argv[1] == "debugger"):
+	Logger("Debugger initialized.", CT.WARN)
+	debugger_mode = True
 	while(True):
 		oprint('> ',end='')
 		a = input()

@@ -1,2 +1,0 @@
-elvex-social.py
-@pause

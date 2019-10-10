@@ -16,7 +16,7 @@ Logger("Python importing complete.", CT.INFO)
 init(autoreset=True)
 Logger("Colorama initialized.", CT.INFO)
 
-version = 3
+
 Logger("Elvex Social Server version "+str(version), CT.INFO)
 
 bufferSize = 1024

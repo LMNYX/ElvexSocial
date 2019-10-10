@@ -1,2 +1,0 @@
-elvex.py debugger
-@pause
