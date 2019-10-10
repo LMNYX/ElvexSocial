@@ -3,6 +3,7 @@ import os
 from enum import Enum
 from time import gmtime, strftime
 from colorama import Fore, Back, init
+import random
 import sys
 import json
 import sqlite3
@@ -52,11 +53,16 @@ if not(os.path.isfile("current.log")):
 with open("current.log", "w") as w:
 	w.write("")
 
-if not(os.path.isfile("unix"+str(StartTime)+".log")):
-	with open("unix"+str(StartTime)+".log", "w") as w:
+try:
+	os.mkdir("log")
+except FileExistsError:
+	idc = "i dont care"
+
+if not(os.path.isfile("log/unix"+str(StartTime)+".log")):
+	with open("log/unix"+str(StartTime)+".log", "w") as w:
 		w.write("")
 
-with open("unix"+str(StartTime)+".log", "w") as w:
+with open("log/unix"+str(StartTime)+".log", "w") as w:
 	w.write("")
 
 class CT(Enum):
@@ -79,25 +85,25 @@ def Logger(stri,type = CT.NONE):
 	if(type == CT.NONE):
 		with open("current.log", "a") as w:
 			w.write("[NONE]["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"] "+stri+"\n")
-		with open("unix"+str(StartTime)+".log", "a") as w:
+		with open("log/unix"+str(StartTime)+".log", "a") as w:
 			w.write("[NONE]["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"] "+stri+"\n")
 		return
 	if(type == CT.WARN):
 		with open("current.log", "a") as w:
 			w.write("[WARN]["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"] "+stri+"\n")
-		with open("unix"+str(StartTime)+".log", "a") as w:
+		with open("log/unix"+str(StartTime)+".log", "a") as w:
 			w.write("[WARN]["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"] "+stri+"\n")
 		return
 	if(type == CT.INFO):
 		with open("current.log", "a") as w:
 			w.write("[INFO]["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"] "+stri+"\n")
-		with open("unix"+str(StartTime)+".log", "a") as w:
+		with open("log/unix"+str(StartTime)+".log", "a") as w:
 			w.write("[INFO]["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"] "+stri+"\n")
 		return
 	if(type == CT.ERROR):
 		with open("current.log", "a") as w:
 			w.write("[ERROR]["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"] "+stri+"\n")
-		with open("unix"+str(StartTime)+".log", "a") as w:
+		with open("log/unix"+str(StartTime)+".log", "a") as w:
 			w.write("[ERROR]["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"] "+stri+"\n")
 		return
 
@@ -118,28 +124,28 @@ def LogPrint(stri,type = CT.NONE):
 		eprint("[NONE]" + Back.WHITE+Fore.BLACK + "["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"]"+Back.RESET+Fore.RESET+" "+stri)
 		with open("current.log", "a") as w:
 			w.write("[NONE]["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"] "+stri+"\n")
-		with open("unix"+str(StartTime)+".log", "a") as w:
+		with open("log/unix"+str(StartTime)+".log", "a") as w:
 			w.write("[NONE]["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"] "+stri+"\n")
 		return
 	if(type == CT.WARN):
 		eprint(Fore.YELLOW+"[WARN]"+Back.WHITE+Fore.BLACK+"["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"]"+Back.RESET+Fore.RESET+" "+stri)
 		with open("current.log", "a") as w:
 			w.write("[WARN]["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"] "+stri+"\n")
-		with open("unix"+str(StartTime)+".log", "a") as w:
+		with open("log/unix"+str(StartTime)+".log", "a") as w:
 			w.write("[WARN]["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"] "+stri+"\n")
 		return
 	if(type == CT.INFO):
 		eprint(Fore.CYAN+"[INFO]"+Back.WHITE+Fore.BLACK+"["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"]"+Back.RESET+Fore.RESET+" "+stri)
 		with open("current.log", "a") as w:
 			w.write("[INFO]["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"] "+stri+"\n")
-		with open("unix"+str(StartTime)+".log", "a") as w:
+		with open("log/unix"+str(StartTime)+".log", "a") as w:
 			w.write("[INFO]["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"] "+stri+"\n")
 		return
 	if(type == CT.ERROR):
 		eprint(Fore.RED+"[ERROR]"+Back.WHITE+Fore.BLACK+"["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"]"+Back.RESET+Fore.RESET+" "+stri)
 		with open("current.log", "a") as w:
 			w.write("[ERROR]["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"] "+stri+"\n")
-		with open("unix"+str(StartTime)+".log", "a") as w:
+		with open("log/unix"+str(StartTime)+".log", "a") as w:
 			w.write("[ERROR]["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"] "+stri+"\n")
 		return
 
@@ -205,7 +211,7 @@ def RemoveUser(login):
 	conn.close()
 	return "OK"
 
-def ListUsers():
+def ListUsers()->'User list':
 	"""List all users."""
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
@@ -467,6 +473,36 @@ def About():
 		return "FAILED"
 	print('Elvex SOCIAL v'+str(version))
 
+def ForceUpdateStore():
+	"""Force shop to update its containment."""
+	conn = sqlite3.connect("additional.db")
+	c = conn.cursor()
+	a = c.execute("SELECT * FROM time_storage WHERE sett = 'store_update';").fetchone()[1]
+	c.execute("UPDATE time_storage SET unix = {} WHERE sett = 'store_update'".format(str(int(time.time()))))
+	conn.commit()
+	conn.close()
+	return "SHOP_UPDATED"
+
+def UpdateStore():
+	"""Update store containment."""
+	conn = sqlite3.connect("additional.db")
+	c = conn.cursor()
+	a = c.execute("SELECT * FROM time_storage WHERE sett = 'store_update';").fetchone()[1]
+	if(a+3600 > int(time.time())):
+		conn.close()
+		return "TIMER_CONTINUES"
+	else:
+		c.execute("UPDATE time_storage SET unix = {} WHERE sett = 'store_update'".format(str(int(time.time()))))
+		conn.commit()
+		conn.close()
+		return "SHOP_UPDATED"
+
+def GetStoreTimer():
+	"""Get amount of seconds before store updates."""
+	conn = sqlite3.connect("additional.db")
+	c = conn.cursor()
+	a = c.execute("SELECT * FROM time_storage WHERE sett = 'store_update';").fetchone()[1]
+	return 3600-(int(time.time())-a)
 
 # Checking dbs
 
@@ -492,6 +528,7 @@ if not (os.path.isfile("additional.db")):
              (item_code text, price int)''')
 	c.execute('''CREATE TABLE time_storage
              (sett text, unix int)''')
+	c.execute('''INSERT INTO time_storage VALUES ('store_update', 0)''')
 	conn.commit()
 	conn.close()
 	Logger("Created new additionals database, because additional.db was missing.", CT.INFO)

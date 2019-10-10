@@ -2,3 +2,4 @@
 *.db
 *.ini
 *.cmd
+__pycache__
