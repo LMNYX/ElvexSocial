@@ -458,6 +458,7 @@ def isCrate(item_code):
 		conn.close()
 		return False
 
+
 def About():
 	"""Get information about ELVEX SOCIAL"""
 	global debugger_mode
@@ -465,6 +466,7 @@ def About():
 	if not debugger_mode:
 		return "FAILED"
 	print('Elvex SOCIAL v'+str(version))
+
 
 # Checking dbs
 
@@ -484,6 +486,12 @@ if not (os.path.isfile("additional.db")):
 	c = conn.cursor()
 	c.execute('''CREATE TABLE crates
              (item_code text, item_open_code text, items_in text)''')
+	c.execute('''CREATE TABLE shop_pool
+             (item_code text, min_price int, max_price int)''')
+	c.execute('''CREATE TABLE shop_current
+             (item_code text, price int)''')
+	c.execute('''CREATE TABLE time_storage
+             (sett text, unix int)''')
 	conn.commit()
 	conn.close()
 	Logger("Created new additionals database, because additional.db was missing.", CT.INFO)
