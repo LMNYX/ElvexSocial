@@ -19,6 +19,10 @@ if(platform.system() == "Windows"):
 
 oprint = print
 ohelp = help
+if(platform.system() == "Windows"):
+	def clear(): os.system("cls")
+else:
+	def clear(): os.system("clear")
 
 def help():
 	"""List of all functions."""
@@ -427,6 +431,16 @@ def EditUser(username, what, how):
 	conn.close()
 	return "OK"
 
+def CreateCrate(item_code, key_item_code, loot_table):
+	"""Creates a new crate."""
+	conn = sqlite3.connect('additional.db')
+	c = conn.cursor()
+	if not (is_json(loot_table)):
+		return "LOOTTABLE_NOT_JSON"
+	c.execute("INSERT INTO crates VALUES ('{}', '{}', '{}')".format(item_code,key_item_code,loot_table))
+	conn.commit()
+	conn.close()
+	return "OK"
 # Checking dbs
 
 if not (os.path.isfile("users.db")):
