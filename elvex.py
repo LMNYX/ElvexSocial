@@ -12,15 +12,25 @@ import hashlib
 import base64
 import binascii
 import re
+import elvex
+import inspect
 if(platform.system() == "Windows"):
 	import subprocess
-
 
 oprint = print
 ohelp = help
 
 def help():
-	return
+	"""List of all functions."""
+	NotList = ["Enum", "gmtime", "strftime", "init", "ohelp", "CT", "oprint"]
+	for name, val in elvex.__dict__.items():
+		if callable(val) and name not in NotList:
+			args = inspect.getfullargspec(val)[0]
+			args = ', '.join(args)
+			if(str(val.__doc__) == "None"):
+				print(name + "(" + args + ") - No description.")
+			else:
+				print(name + "(" + args + ") - " + val.__doc__, CT.INFO)
 
 StartTime = time.time()
 
@@ -51,12 +61,15 @@ class CT(Enum):
 	NONE = 4
 
 def EncodedString(stri):
+	"""Encodes string."""
 	return str.encode(stri)
 
 def eprint(t):
+	"""Prints with newline."""
 	sys.stdout.write(t+'\n')
 
 def Logger(stri,type = CT.NONE):
+	"""Add message to log."""
 	global StartTime
 	if(type == CT.NONE):
 		with open("current.log", "a") as w:
@@ -86,6 +99,7 @@ def Logger(stri,type = CT.NONE):
 # "unix"+str(StartTime)+".log"
 
 def is_json(myjson):
+  """Check if string is json."""
   try:
     json_object = json.loads(myjson)
   except ValueError as e:
@@ -93,6 +107,7 @@ def is_json(myjson):
   return True
 
 def LogPrint(stri,type = CT.NONE):
+	"""Print and add to log."""
 	global StartTime
 	if(type == CT.NONE):
 		eprint("[NONE]" + Back.WHITE+Fore.BLACK + "["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"]"+Back.RESET+Fore.RESET+" "+stri)
@@ -124,10 +139,12 @@ def LogPrint(stri,type = CT.NONE):
 		return
 
 class print():
+	"""Print a message."""
 	def __init__(self,msg,typeo = CT.NONE):
 		LogPrint(msg,typeo)
 
 def IsUserExists(login):
+	"""Is user exists in Elvex DB?"""
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
 	r = c.execute("SELECT * FROM users WHERE username = '{}'".format(login))
@@ -137,10 +154,12 @@ def IsUserExists(login):
 		return False
 
 def EStr(stre):
+	"""Encode string to password."""
 	a = hmac.new(b'_EaLEoELXoELWoXLOWQlWA_1+-2#)LC<E!!!(!0CC@@@@A', stre.encode(), hashlib.sha256)
 	return str(a.hexdigest())
 
 def AddUser(login, pswd, avatar = 0, electricity = 0, ppcount = 0.0, inventory = "[]", customization = '{"droidColor": "blue", "lampColor": "blue","hat": "none", "body": "none", "hands": "none", "legs": "none"}', bio = "Not specified.", stats = "{}", banned = False, regip = "0.0.0.0"):
+	"""Create user in Elvex DB."""
 	if(IsUserExists(login)):
 		print("Creation user with username "+login+" failed. User already exists.", CT.ERROR)
 		return "USER_EXISTS"
@@ -163,6 +182,7 @@ def AddUser(login, pswd, avatar = 0, electricity = 0, ppcount = 0.0, inventory =
 
 
 def RemoveUser(login):
+	"""Remove user from Elvex DB."""
 	if not (IsUserExists(login)):
 		print("Removal failed. User doesn't exists. ("+login+")", CT.ERROR)
 		return "USER_GONE"
@@ -180,7 +200,16 @@ def RemoveUser(login):
 	conn.close()
 	return "OK"
 
+def ListUsers():
+	"""List all users."""
+	conn = sqlite3.connect('users.db')
+	c = conn.cursor()
+	a = c.execute("SELECT * FROM users")
+	for b in a:
+		print("- "+b[0])
+
 def BanUser(login):
+	"""Ban player from Elvex."""
 	if not (IsUserExists(login)):
 		print("Ban failed. User doesn't exists. ("+login+")", CT.ERROR)
 		return "USER_GONE"
@@ -194,6 +223,7 @@ def BanUser(login):
 	return "OK"
 
 def UnbanUser(login):
+	"""Pardon a player."""
 	if not (IsUserExists(login)):
 		print("Ban failed. User doesn't exists. ("+login+")", CT.ERROR)
 		return "USER_GONE"
@@ -210,6 +240,7 @@ flushing = False
 flushingTried = 0
 
 def FlushUsers():
+	"""(WARNING) Delete all users."""
 	global flushing
 	global flushingTried
 	if(flushing == False):
@@ -231,6 +262,7 @@ def FlushUsers():
 	flushing = False
 
 def GetUser(username, safe = True):
+	"""Get user by name."""
 	if not (IsUserExists(username)):
 		print("Tried to get user, but user with that name doesn't exists. ("+username+")", CT.ERROR)
 		return "USER_GONE"
@@ -247,6 +279,7 @@ def GetUser(username, safe = True):
 	return json.dumps(a)
 
 def AddInvUser(username,item_code):
+	"""Add item to player's inventory."""
 	if not (IsUserExists(username)):
 		print("Tried to add item to user's inventory, but user with that name doesn't exists. ("+username+")", CT.ERROR)
 		return "USER_GONE"
@@ -264,6 +297,7 @@ def AddInvUser(username,item_code):
 	return "OK"
 
 def RemInvUser(username,index):
+	"""Take item from player's inventory."""
 	if not (IsUserExists(username)):
 		print("Tried to take item from user's inventory, but user with that name doesn't exists. ("+username+")", CT.ERROR)
 		return "USER_GONE"
@@ -281,6 +315,7 @@ def RemInvUser(username,index):
 	return "OK"
 
 def SetCustomizationUser(username, n, h):
+	"""Set item to customization slot of player."""
 	if not (IsUserExists(username)):
 		print("Tried to change user's customization, but user with that name doesn't exists. ("+username+")", CT.ERROR)
 		return "USER_GONE"
@@ -298,6 +333,7 @@ def SetCustomizationUser(username, n, h):
 	return "OK"
 
 def EditUserPassword(username, currentPass, newPass):
+	"""Edit password of user (needs old)."""
 	if not (IsUserExists(username)):
 		print("Tried to change user's password, but user with that name doesn't exists. ("+username+")", CT.ERROR)
 		return "USER_GONE"
@@ -315,7 +351,25 @@ def EditUserPassword(username, currentPass, newPass):
 	conn.close()
 	return "OK"
 
+def UnsafeEditUserPassword(username, newPass):
+	"""Edit password of user."""
+	if not (IsUserExists(username)):
+		print("Tried to change user's password, but user with that name doesn't exists. ("+username+")", CT.ERROR)
+		return "USER_GONE"
+	if(username.isspace()):
+		return "USER_SPACE"
+	conn = sqlite3.connect("users.db")
+	c = conn.cursor()
+	a = c.execute("SELECT passhash FROM users WHERE username = '{}'".format(username))
+	a = str(a.fetchone()[0])
+	newPass = EStr(newPass)
+	c.execute("UPDATE users SET passhash = '{}' WHERE username = '{}'".format(newPass, username))
+	conn.commit()
+	conn.close()
+	return "OK"
+
 def ChangeUserStat(username,stat,to):
+	"""Change user's statistic."""
 	if not (IsUserExists(username)):
 		print("Tried to change user's stat, but user with that name doesn't exists. ("+username+")", CT.ERROR)
 		return "USER_GONE"
@@ -333,6 +387,7 @@ def ChangeUserStat(username,stat,to):
 	return "OK"
 
 def EditUser(username, what, how):
+	"""Edit user account."""
 	if not (IsUserExists(username)):
 		print("Tried to edit user, but user with that name doesn't exists. ("+username+")", CT.ERROR)
 		return "USER_GONE"
