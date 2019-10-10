@@ -28,7 +28,7 @@ else:
 
 def help():
 	"""List of all functions."""
-	NotList = ["Enum", "gmtime", "strftime", "init", "ohelp", "CT", "oprint"]
+	NotList = ["Enum", "gmtime", "strftime", "init", "ohelp", "CT", "oprint", "round50"]
 	for name, val in elvex.__dict__.items():
 		if callable(val) and name not in NotList:
 			args = inspect.getfullargspec(val)[0]
@@ -43,6 +43,8 @@ StartTime = time.time()
 true = True
 false = False
 
+def round50(n):
+    return round(n * 2, -2)
 
 init(autoreset=true)
 
@@ -473,16 +475,49 @@ def About():
 		return "FAILED"
 	print('Elvex SOCIAL v'+str(version))
 
+def GetRandomPoolItem():
+	"""Select random item out of shop pool."""
+	conn = sqlite3.connect("additional.db")
+	c = conn.cursor()
+	a = c.execute("SELECT * FROM shop_pool").fetchall()
+	a = a
+	conn.close()
+	return random.choice(a)
+
 def ForceUpdateStore():
 	"""Force shop to update its containment."""
 	conn = sqlite3.connect("additional.db")
 	c = conn.cursor()
+	c.execute("DELETE FROM shop_current")
+	item = GetRandomPoolItem()
+	price = round50(random.randint(item[1], item[2]))
+	c.execute("INSERT INTO shop_current VALUES ('{}', {})".format(item[0],str(price)))
+	item = GetRandomPoolItem()
+	price = round50(random.randint(item[1], item[2]))
+	c.execute("INSERT INTO shop_current VALUES ('{}', {})".format(item[0],str(price)))
+	item = GetRandomPoolItem()
+	price = round50(random.randint(item[1], item[2]))
+	c.execute("INSERT INTO shop_current VALUES ('{}', {})".format(item[0],str(price)))
 	a = c.execute("SELECT * FROM time_storage WHERE sett = 'store_update';").fetchone()[1]
 	c.execute("UPDATE time_storage SET unix = {} WHERE sett = 'store_update'".format(str(int(time.time()))))
 	conn.commit()
 	conn.close()
 	return "SHOP_UPDATED"
 
+def LogStoreItems():
+	"""Log current store items."""
+	conn = sqlite3.connect("additional.db")
+	c = conn.cursor()
+	a = c.execute("SELECT * FROM shop_current").fetchall()
+	for t in a:
+		print(t[0] + " -- " + str(t[1]) +" electricity")
+def GetStoreItems():
+	"""Get current store items."""
+	UpdateStore()
+	conn = sqlite3.connect("additional.db")
+	c = conn.cursor()
+	a = c.execute("SELECT * FROM shop_current").fetchall()
+	return a
 def UpdateStore():
 	"""Update store containment."""
 	conn = sqlite3.connect("additional.db")
@@ -492,17 +527,39 @@ def UpdateStore():
 		conn.close()
 		return "TIMER_CONTINUES"
 	else:
+		c.execute("DELETE FROM shop_current")
+		item = GetRandomPoolItem()
+		price = round50(random.randint(item[1], item[2]))
+		c.execute("INSERT INTO shop_current VALUES ('{}', {})".format(item[0],str(price)))
+		item = GetRandomPoolItem()
+		price = round50(random.randint(item[1], item[2]))
+		c.execute("INSERT INTO shop_current VALUES ('{}', {})".format(item[0],str(price)))
+		item = GetRandomPoolItem()
+		price = round50(random.randint(item[1], item[2]))
+		c.execute("INSERT INTO shop_current VALUES ('{}', {})".format(item[0],str(price)))
 		c.execute("UPDATE time_storage SET unix = {} WHERE sett = 'store_update'".format(str(int(time.time()))))
 		conn.commit()
 		conn.close()
 		return "SHOP_UPDATED"
 
+
 def GetStoreTimer():
 	"""Get amount of seconds before store updates."""
+	UpdateStore()
 	conn = sqlite3.connect("additional.db")
 	c = conn.cursor()
 	a = c.execute("SELECT * FROM time_storage WHERE sett = 'store_update';").fetchone()[1]
+	conn.close()
 	return 3600-(int(time.time())-a)
+
+def AddItemPool(item_code, min_price, max_price):
+	"""Adds item to store pool"""
+	conn = sqlite3.connect("additional.db")
+	c = conn.cursor()
+	c.execute("INSERT INTO shop_pool VALUES ('{}', {}, {})".format(item_code, str(min_price), str(max_price)))
+	conn.commit()
+	conn.close()
+	return "OK"
 
 # Checking dbs
 
