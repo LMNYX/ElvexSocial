@@ -97,7 +97,6 @@ while(True):
 	bap = server.recvfrom(bufferSize)
 	message = str(cipher.decrypt(bap[0]))
 	message = message[:-1][2:]
-	print(message)
 	address = bap[1]
 	print("Received packet from "+str(address[0])+" with size of "+str(address[1])+" bytes.", CT.INFO)
 	if not (is_json(message)):
