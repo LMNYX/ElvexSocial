@@ -88,20 +88,16 @@ if(config['Connection']['serverip'] == "127.0.0.1" or config['Connection']['serv
 	config['Connection']['serverip'] == ""
 server.bind((config['Connection']['serverip'], int(config['Connection']['port'])))
 LogPrint("Ready to listen.", CT.INFO)
-
+try:
+	key = RSA.importKey(open('private.pem').read())
+	cipher = PKCS1_OAEP.new(key)
+except Exception:
+	print("Bad RSA key. Recreate it.", CT.ERROR)
 while(True):
 	bap = server.recvfrom(bufferSize)
-	message = str(bap[0].decode())
-	try:
-		key = RSA.importKey(open('private.pem').read())
-		cipher = PKCS1_OAEP.new(key)
-	except Exception:
-		print("Bad RSA key. Recreate it.", CT.ERROR)
-	try:
-		message =str( cipher.decrypt(message))
-	except Exception:
-		print("Received bad package. Ignoring... ({})".format(str(message)), CT.WARN)
-		continue
+	message = str(cipher.decrypt(bap[0]))
+	message = message[:-1][2:]
+	print(message)
 	address = bap[1]
 	print("Received packet from "+str(address[0])+" with size of "+str(address[1])+" bytes.", CT.INFO)
 	if not (is_json(message)):
