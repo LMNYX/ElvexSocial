@@ -3,3 +3,4 @@
 *.ini
 *.cmd
 __pycache__
+*.pem
