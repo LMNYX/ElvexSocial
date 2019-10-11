@@ -15,6 +15,9 @@ import binascii
 import re
 import elvex
 import inspect
+from OpenSSL import crypto, SSL
+from socket import gethostname
+from time import gmtime, mktime
 if(platform.system() == "Windows"):
 	import subprocess
 version = 3
@@ -26,9 +29,34 @@ if(platform.system() == "Windows"):
 else:
 	def clear(): os.system("clear")
 
+def create_self_signed_cert():
+	CERT_FILE = "elvex.crt"
+	KEY_FILE = "private.key"
+	# create a key pair
+	k = crypto.PKey()
+	k.generate_key(crypto.TYPE_RSA, 1024)
+	# create a self-signed cert
+	cert = crypto.X509()
+	cert.get_subject().C = "PL"
+	cert.get_subject().ST = "Warszawa"
+	cert.get_subject().L = "Warszawa"
+	cert.get_subject().O = "Act8 Team"
+	cert.get_subject().OU = "Act8 Team"
+	cert.get_subject().CN = gethostname()
+	cert.set_serial_number(1000)
+	cert.gmtime_adj_notBefore(0)
+	cert.gmtime_adj_notAfter(2147483647)
+	cert.set_issuer(cert.get_subject())
+	cert.set_pubkey(k)
+	cert.sign(k, 'sha1')
+	with open(CERT_FILE, "wb") as f:
+		f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
+	with open(KEY_FILE, "wb") as f:
+		f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, k))
+
 def help():
 	"""List of all functions."""
-	NotList = ["Enum", "gmtime", "strftime", "init", "ohelp", "CT", "oprint", "round50"]
+	NotList = ["Enum", "gmtime", "strftime", "init", "ohelp", "CT", "oprint", "round50", "create_self_signed_cert"]
 	for name, val in elvex.__dict__.items():
 		if callable(val) and name not in NotList:
 			args = inspect.getfullargspec(val)[0]

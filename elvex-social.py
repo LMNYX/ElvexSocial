@@ -10,6 +10,11 @@ import hashlib
 import base64
 import sqlite3
 import subprocess
+import ssl
+from OpenSSL import crypto, SSL
+from Crypto.Cipher import AES
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.PublicKey import RSA
 
 Logger("Python importing complete.", CT.INFO)
 
@@ -51,6 +56,9 @@ LogPrint("Ready to listen.", CT.INFO)
 while(True):
 	bap = server.recvfrom(bufferSize)
 	message = bap[0].decode()
+	rsaKey = RSA.importKey(open("elvex.crt", 'r'))
+	pkcs1CipherTmp = PKCS1_OAEP.new(rsaKey)
+	decryptedString = pkcs1CipherTmp.decrypt(message)
 	address = bap[1]
 	print("Received packet from "+str(address[0])+" with size of "+str(address[1])+" bytes.", CT.INFO)
 	if not (is_json(message)):
@@ -114,4 +122,6 @@ while(True):
 		e = "e"
 	else:
 		Response = EncodedString(json.dumps({'error': 'BAD_REQUEST'}))
+	pkcs1CipherTmp = PKCS1_OAEP.new(rsaKey)
+	Response = pkcs1CipherTmp.encrypt(Response)
 	server.sendto(Response, address)
