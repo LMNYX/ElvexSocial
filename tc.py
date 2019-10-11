@@ -17,7 +17,7 @@ while(True):
 	bytesToSend = a
 	UDPClientSocket.sendto(bytesToSend, serverAddressPort)
 	msgFromServer = UDPClientSocket.recvfrom(bufferSize)
-	msg = "[R]: {}".format(msgFromServer[0][:-1][2:])
+	msg = "[R]: {}".format(msgFromServer[0])
 	print(msg)
 print(msg)
 time.sleep(1000)

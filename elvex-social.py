@@ -99,6 +99,15 @@ while(True):
 	message = message[:-1][2:]
 	address = bap[1]
 	print("Received packet from "+str(address[0])+" with size of "+str(address[1])+" bytes.", CT.INFO)
+	try:
+		fff = int(message)
+		del fff
+		Logger("It's int!", CT.WARN)
+		Response = EncodedString(json.dumps({'error': 'NOT_JSON'}))
+		server.sendto(Response, address)
+		continue
+	except Exception:
+		Logger("Woah! Everything is ok!")
 	if not (is_json(message)):
 		Response = EncodedString(json.dumps({'error': 'NOT_JSON'}))
 		server.sendto(Response, address)
