@@ -21,6 +21,21 @@ Logger("Python importing complete.", CT.INFO)
 init(autoreset=True)
 Logger("Colorama initialized.", CT.INFO)
 
+if not (os.path.isfile("elvex.crt")):
+	if not (os.path.isfile("private.key")):
+		Logger("Certificate and key is missing recreating.", CT.WARN)
+	else:
+		Logger("Certificate is missing, but key exists. Recreating.", CT.WARN)
+		os.unlink("private.key")
+	create_self_signed_cert()
+
+if not (os.path.isfile("private.key")):
+	if not (os.path.isfile("elvex.crt")):
+		Logger("Certificate and key is missing recreating.", CT.WARN)
+	else:
+		Logger("Key is missing, but certificate exists. Recreating.", CT.WARN)
+		os.unlink("elvex.crt")
+	create_self_signed_cert()
 
 Logger("Elvex Social Server version "+str(version), CT.INFO)
 
