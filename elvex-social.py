@@ -15,27 +15,48 @@ from OpenSSL import crypto, SSL
 from Crypto.Cipher import AES
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
+from Crypto.Util.asn1 import DerSequence
+from binascii import a2b_base64
+
 
 Logger("Python importing complete.", CT.INFO)
 
 init(autoreset=True)
 Logger("Colorama initialized.", CT.INFO)
 
-if not (os.path.isfile("elvex.crt")):
-	if not (os.path.isfile("private.key")):
-		Logger("Certificate and key is missing recreating.", CT.WARN)
+if not (os.path.isfile("private.pem")):
+	if not (os.path.isfile("public.pem")):
+		key = RSA.generate(2048)
+		private_key = key.export_key()
+		file_out = open("private.pem", "wb")
+		file_out.write(private_key)
+		file_out.close()
+		public_key = key.publickey().export_key()
+		file_out = open("public.pem", "wb")
+		file_out.write(public_key)
+		file_out.close()
 	else:
-		Logger("Certificate is missing, but key exists. Recreating.", CT.WARN)
-		os.unlink("private.key")
-	create_self_signed_cert()
-
-if not (os.path.isfile("private.key")):
-	if not (os.path.isfile("elvex.crt")):
-		Logger("Certificate and key is missing recreating.", CT.WARN)
-	else:
-		Logger("Key is missing, but certificate exists. Recreating.", CT.WARN)
-		os.unlink("elvex.crt")
-	create_self_signed_cert()
+		os.unlink("public.pem")
+		key = RSA.generate(2048)
+		private_key = key.export_key()
+		file_out = open("private.pem", "wb")
+		file_out.write(private_key)
+		file_out.close()
+		public_key = key.publickey().export_key()
+		file_out = open("public.pem", "wb")
+		file_out.write(public_key)
+		file_out.close()
+else:
+	if not (os.path.isfile("public.pem")):
+		key = RSA.generate(2048)
+		private_key = key.export_key()
+		file_out = open("private.pem", "wb")
+		file_out.write(private_key)
+		file_out.close()
+		public_key = key.publickey().export_key()
+		file_out = open("public.pem", "wb")
+		file_out.write(public_key)
+		file_out.close()
 
 Logger("Elvex Social Server version "+str(version), CT.INFO)
 
@@ -70,10 +91,17 @@ LogPrint("Ready to listen.", CT.INFO)
 
 while(True):
 	bap = server.recvfrom(bufferSize)
-	message = bap[0].decode()
-	rsaKey = RSA.importKey(open("elvex.crt", 'r'))
-	pkcs1CipherTmp = PKCS1_OAEP.new(rsaKey)
-	decryptedString = pkcs1CipherTmp.decrypt(message)
+	message = str(bap[0].decode())
+	try:
+		key = RSA.importKey(open('private.pem').read())
+		cipher = PKCS1_OAEP.new(key)
+	except Exception:
+		print("Bad RSA key. Recreate it.", CT.ERROR)
+	try:
+		message =str( cipher.decrypt(message))
+	except Exception:
+		print("Received bad package. Ignoring... ({})".format(str(message)), CT.WARN)
+		continue
 	address = bap[1]
 	print("Received packet from "+str(address[0])+" with size of "+str(address[1])+" bytes.", CT.INFO)
 	if not (is_json(message)):
@@ -137,6 +165,4 @@ while(True):
 		e = "e"
 	else:
 		Response = EncodedString(json.dumps({'error': 'BAD_REQUEST'}))
-	pkcs1CipherTmp = PKCS1_OAEP.new(rsaKey)
-	Response = pkcs1CipherTmp.encrypt(Response)
 	server.sendto(Response, address)
