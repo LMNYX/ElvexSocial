@@ -1,26 +1,3 @@
-# Elvex Social Server
-Official ELVEX SOCIAL server. 
-
-## Requirements
-* Python 3.7
-* SQLite3
-* OpenSSL
-
-## Usage
-To start server use: `elvex.py`, to startup the administration panel use `elvex-social.py debugger`.
-
-## Insallation
-1. Clone the repository ( `git clone https://github.com/lmnyx/ElvexSocialServer.git` )
-2. Install Python 3.7+
-3. Run `pip install -r REQUIREMENTS.txt` in the clone directory.
-4. Start the server using `elvex-social.py` **(not elvex.py)**
-5. Copy public key to the game.
-
-## Tests
-Use `tc.py` to test message sending and use `elvex.py debugger` to run administration board.
-
-## License
-```
                                  Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
@@ -209,7 +186,7 @@ Use `tc.py` to test message sending and use `elvex.py debugger` to run administr
       same "printed page" as the copyright notice for easier
       identification within third-party archives.
 
-   Copyright 2019 act8team & lmnyx
+   Copyright [yyyy] [name of copyright owner]
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -222,4 +199,3 @@ Use `tc.py` to test message sending and use `elvex.py debugger` to run administr
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   ```
