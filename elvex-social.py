@@ -165,8 +165,19 @@ while(True):
 				else:
 					SetCustomizationUser(r[0][0], jsonMessage['args']['slot'], jsonMessage['args']['item'])
 					Response = EncodedString(json.dumps({'response':'OK'}))
-	elif(jsonMessage['act'] == ""):
-		e = "e"
+	elif(jsonMessage['act'] == "market.get"):
+		Response = EncodedString(json.dumps({'response': 'OK', 'items': GetStoreItems()}))
+	elif(jsonMessage['act'] == "market.buy"):
+		if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args'] or 'slot' not in jsonMessage['args']):
+			Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
+		else:
+			StoreItems = GetStoreItems()
+			try:
+				tttt = int(jsonMessage['args']['slot'])
+				del tttt
+				Response = EncodedString(json.dumps({'error':'WIP'}))
+			except Exception:
+				Response = EncodedString(json.dumps({'error':'INVALID_ARG'}))
 	else:
 		Response = EncodedString(json.dumps({'error': 'BAD_REQUEST'}))
 	server.sendto(Response, address)

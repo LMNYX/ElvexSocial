@@ -23,7 +23,14 @@ if(platform.system() == "Windows"):
 version = 3
 debugger_mode = False
 oprint = print
-ohelp = help
+def Void():
+	umm = "umm"
+	del umm
+try:
+	ohelp = help
+except Exception:
+	Void()
+
 if(platform.system() == "Windows"):
 	def clear(): os.system("cls")
 else:
