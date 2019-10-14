@@ -1,4 +1,4 @@
 configparser
 colorama
-openssl
+pyopenssl
 pycryptodome
