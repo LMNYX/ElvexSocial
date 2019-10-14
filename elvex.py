@@ -652,7 +652,6 @@ class nolist_createUser(npyscreen.Form):
 		f.edit()
 		return f
 
-
 def dbgCreateUser():
 	"""Shows form to create user from debugger."""
 	curses.initscr()
