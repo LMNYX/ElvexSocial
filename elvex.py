@@ -18,6 +18,10 @@ import inspect
 from OpenSSL import crypto, SSL
 from socket import gethostname
 from time import gmtime, mktime
+try:
+    import readline
+except ImportError:
+    import pyreadline as readline
 import npyscreen
 if(platform.system() == "Windows"):
 	import subprocess
@@ -36,10 +40,10 @@ if(platform.system() == "Windows"):
 else:
 	def clear(): os.system("clear")
 
-
+NotList = ["Void","Enum", "gmtime", "strftime", "init", "ohelp", "CT", "oprint", "round50", "create_self_signed_cert","completer"]
 def help():
 	"""List of all functions."""
-	NotList = ["Void","Enum", "gmtime", "strftime", "init", "ohelp", "CT", "oprint", "round50", "create_self_signed_cert"]
+	global NotList
 	cmds = 0
 	for name, val in elvex.__dict__.items():
 		if callable(val) and name not in NotList:
@@ -687,6 +691,25 @@ if not (os.path.isfile("additional.db")):
 	conn.close()
 	Logger("Created new additionals database, because additional.db was missing.", CT.INFO)
 
+def completer(text,state):
+	global NotList
+	CMD = []
+	for name, val in elvex.__dict__.items():
+		if callable(val) and name not in NotList:
+			try:
+				args = inspect.getfullargspec(val)[0]
+			except Exception:
+				continue
+			args = ', '.join(args)
+			if(name.startswith("nolist_")):
+				continue
+			CMD.append(name)
+	options = [cmd for cmd in CMD if cmd.startswith(text)]
+	if state < len(options):
+		return options[state]
+	else:
+		return None
+
 if(platform.system() == "Windows"):
 	subprocess.check_call(["attrib","+H","users.db"])
 	subprocess.check_call(["attrib","+H","additional.db"])
@@ -695,6 +718,8 @@ if(len(sys.argv) > 1 and sys.argv[1] == "debugger"):
 	import curses
 	isFormattedError = True
 	isDebugger = True
+	readline.parse_and_bind("tab: complete")
+	readline.set_completer(completer)
 	while(True):
 		oprint('> ',end='')
 		if(isFormattedError):
