@@ -148,8 +148,8 @@ while(True):
 			if(r == "USER_GONE" or r == "USER_SPACE"):
 				Response = EncodedString(json.dumps({'error': r}))
 			else:
-				r = json.loads(r)
-				Response = EncodedString(json.dumps({'response': 'OK', '{}'.format(jsonMessage['args']['login']): {'login': r[0][0], 'avatar': r[0][1], 'electricity': r[0][2], 'pp': r[0][3], 'inventory': json.loads(r[0][4]), 'customization': json.loads(r[0][5]), 'bio': r[0][6], 'stats': json.loads(r[0][7]), 'banned': bool(r[0][8])}}))
+				r = r
+				Response = EncodedString(json.dumps({'response': 'OK', '{}'.format(jsonMessage['args']['login']): {'login': r[0], 'avatar': r[1], 'electricity': r[2], 'pp': r[3], 'inventory': json.loads(r[4]), 'customization': json.loads(r[5]), 'bio': r[6], 'stats': json.loads(r[7]), 'banned': bool(r[8])}}))
 	elif(jsonMessage['act'] == 'inventory.setCustomization'):
 		if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args'] or 'slot' not in jsonMessage['args'] or 'item' not in jsonMessage['args']):
 			Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
@@ -159,11 +159,11 @@ while(True):
 				Response = EncodedString(json.dumps({'error': r}))
 			else:
 				r = json.loads(r)
-				inv = r[0][4]
+				inv = r[4]
 				if(jsonMessage['args']['item'] not in inv):
 					Response = EncodedString(json.dumps({'error':'NO_ITEM'}))
 				else:
-					SetCustomizationUser(r[0][0], jsonMessage['args']['slot'], jsonMessage['args']['item'])
+					SetCustomizationUser(r[0], jsonMessage['args']['slot'], jsonMessage['args']['item'])
 					Response = EncodedString(json.dumps({'response':'OK'}))
 	elif(jsonMessage['act'] == "market.get"):
 		Response = EncodedString(json.dumps({'response': 'OK', 'items': GetStoreItems()}))
@@ -175,7 +175,20 @@ while(True):
 			try:
 				tttt = int(jsonMessage['args']['slot'])
 				del tttt
-				Response = EncodedString(json.dumps({'error':'WIP'}))
+				r = GetUser(jsonMessage['args']['login'])
+				if(r == "USER_GONE" or r == "USER_SPACE"):
+					Response = EncodedString(json.dumps({'error': r}))
+				else:
+					r = GetStoreItem(int(jsonMessage['args']['slot']))
+					if(type(r) == str):
+						Response = EncodedString(json.dumps({'error': 'NO_INDEX_ITEM'}))
+					else:
+						if(GetUserBalance(jsonMessage['args']['login']) < r[1]):
+							Response = EncodedString(json.dumps({'error': 'NOT_ENOUGH_CASH'}))
+						else:
+							EditUser(jsonMessage['args']['login'], "electricity", GetUserBalance(jsonMessage['args']['login'])-r[1])
+							AddInvUser(jsonMessage['args']['login'], r[0])
+							Response = EncodedString(json.dumps({'response':'OK'}))
 			except Exception:
 				Response = EncodedString(json.dumps({'error':'INVALID_ARG'}))
 	else:
