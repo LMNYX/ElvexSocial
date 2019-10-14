@@ -21,7 +21,6 @@ from time import gmtime, mktime
 if(platform.system() == "Windows"):
 	import subprocess
 version = 3
-debugger_mode = False
 oprint = print
 def Void():
 	umm = "umm"
@@ -39,17 +38,28 @@ else:
 
 def help():
 	"""List of all functions."""
-	NotList = ["Enum", "gmtime", "strftime", "init", "ohelp", "CT", "oprint", "round50", "create_self_signed_cert"]
+	NotList = ["Void","Enum", "gmtime", "strftime", "init", "ohelp", "CT", "oprint", "round50", "create_self_signed_cert"]
+	cmds = 0
 	for name, val in elvex.__dict__.items():
 		if callable(val) and name not in NotList:
-			args = inspect.getfullargspec(val)[0]
+			try:
+				args = inspect.getfullargspec(val)[0]
+			except Exception:
+				continue
 			args = ', '.join(args)
+			cmds += 1
 			if(str(val.__doc__) == "None"):
 				print(name + "(" + args + ") - No description.", CT.INFO)
 			else:
 				print(name + "(" + args + ") - " + val.__doc__, CT.INFO)
+	if(cmds > 0):
+		print("There is "+Fore.GREEN+str(cmds)+Fore.RESET + " functions in total.")
+	else:
+		print("There is "+Fore.RED+str(cmds)+Fore.RESET + " functions in total.")
 
 StartTime = time.time()
+
+isDebugger = False
 
 true = True
 false = False
@@ -182,7 +192,7 @@ def EStr(stre):
 	a = hmac.new(b'_EaLEoELXoELWoXLOWQlWA_1+-2#)LC<E!!!(!0CC@@@@A', stre.encode(), hashlib.sha256)
 	return str(a.hexdigest())
 
-def AddUser(login, pswd, avatar = 0, electricity = 0, ppcount = 0.0, inventory = "[]", customization = '{"droidColor": "blue", "lampColor": "blue","hat": "none", "body": "none", "hands": "none", "legs": "none"}', bio = "Not specified.", stats = "{}", banned = False, regip = "0.0.0.0"):
+def AddUser(login, pswd, avatar = 0, electricity = 0, ppcount = 0.0, inventory = "[]", customization = '{"droidColor": "blue", "lampColor": "blue","hat": "none", "body": "none", "hands": "none", "legs": "none"}', bio = "Not specified.", stats = "{}", banned = False, regip = "0.0.0.0", accessible = True):
 	"""Create user in Elvex DB."""
 	if(IsUserExists(login)):
 		print("Creation user with username "+login+" failed. User already exists.", CT.ERROR)
@@ -199,7 +209,7 @@ def AddUser(login, pswd, avatar = 0, electricity = 0, ppcount = 0.0, inventory =
 	if(r.fetchone()):
 		return "NAME_BANNED"
 	#        TEXT, TEXT, INT, FLOAT, TEXT, TEXT, TEXT, TEXT, BOOL, TEXT
-	c.execute("INSERT INTO users VALUES ('{}', '{}', {}, {}, {}, '{}', '{}', '{}', '{}', {}, '{}')".format(login, pswd, str(avatar), str(electricity), str(ppcount),inventory, customization,bio, stats, str(banned), regip))
+	c.execute("INSERT INTO users VALUES ('{}', '{}', {}, {}, {}, '{}', '{}', '{}', '{}', {}, '{}', {})".format(login, pswd, str(avatar), str(electricity), str(ppcount),inventory, customization,bio, stats, str(banned), regip, str(accessible)))
 	conn.commit()
 	conn.close()
 	return "OK"
@@ -210,11 +220,11 @@ def RemoveUser(login):
 	if not (IsUserExists(login)):
 		print("Removal failed. User doesn't exists. ("+login+")", CT.ERROR)
 		return "USER_GONE"
-	if(username.isspace()):
+	if(login.isspace()):
 		return "USER_SPACE"
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
-	c.execute("DELETE FROM users WHERE username = '{}'".format(login))
+	c.execute("UPDATE users SET accessible = false WHERE username = '{}'".format(login))
 	conn.commit()
 	conn.close()
 	conn = sqlite3.connect('users.db')
@@ -224,6 +234,31 @@ def RemoveUser(login):
 	conn.close()
 	return "OK"
 
+def RestoreUser(login):
+	"""Restores user profile."""
+	if not (IsUserExists(login)):
+		print("Restoring failed. User doesn't exists. ("+login+")", CT.ERROR)
+		return "USER_GONE"
+	if(login.isspace()):
+		return "USER_SPACE"
+	conn = sqlite3.connect('users.db')
+	c = conn.cursor()
+	c.execute("UPDATE users SET accessible = true WHERE username = '{}'".format(login))
+	conn.commit()
+	conn.close()
+	conn = sqlite3.connect('users.db')
+	c = conn.cursor()
+	c.execute("DELETE FROM bannednames WHERE name = '{}'".format(login))
+	conn.commit()
+	conn.close()
+	return "OK"
+def IsAccessibleUser(username):
+	"""Is user profile accessible?"""
+	conn = sqlite3.connect('users.db')
+	c = conn.cursor()
+	r = c.execute("SELECT accessible FROM users WHERE username = '{}'".format(username))
+	r = r.fetchone()
+	return bool(r[0])
 def ListUsers()->'User list':
 	"""List all users."""
 	conn = sqlite3.connect('users.db')
@@ -238,7 +273,7 @@ def BanUser(login):
 	if not (IsUserExists(login)):
 		print("Ban failed. User doesn't exists. ("+login+")", CT.ERROR)
 		return "USER_GONE"
-	if(username.isspace()):
+	if(login.isspace()):
 		return "USER_SPACE"
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
@@ -252,7 +287,7 @@ def UnbanUser(login):
 	if not (IsUserExists(login)):
 		print("Ban failed. User doesn't exists. ("+login+")", CT.ERROR)
 		return "USER_GONE"
-	if(username.isspace()):
+	if(login.isspace()):
 		return "USER_SPACE"
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
@@ -287,9 +322,12 @@ def FlushUsers():
 	flushing = False
 
 def GetUser(username, safe = True):
+	global isDebugger
 	"""Get user by name."""
 	if not (IsUserExists(username)):
 		print("Tried to get user, but user with that name doesn't exists. ("+username+")", CT.ERROR)
+		return "USER_GONE"
+	elif not IsAccessibleUser(username) and not isDebugger:
 		return "USER_GONE"
 	if(username.isspace()):
 		return "USER_SPACE"
@@ -297,11 +335,20 @@ def GetUser(username, safe = True):
 	c = conn.cursor()
 	if(safe):
 		a = c.execute("SELECT username, electricity,avatar, ppcount, inventory, customization, bio, stats, banned FROM users WHERE username = '{}'".format(username))
-		a = a.fetchall()
+		a = a.fetchone()
 	else:
 		a = c.execute("SELECT username, passhash,avatar, electricity,ppcount, inventory, customization, bio, stats, banned, regip FROM users WHERE username = '{}'".format(username))
-		a = a.fetchall()
-	return json.dumps(a)
+		a = a.fetchone()
+	return a
+
+# print(GetUserBalance("test"))
+
+def GetUserBalance(username):
+	"""Get user's balance."""
+	s = GetUser(username)
+	if(type(s) == str):
+		return s
+	return int(s[1])
 
 def AddInvUser(username,item_code):
 	"""Add item to player's inventory."""
@@ -480,9 +527,9 @@ def isCrate(item_code):
 
 def About():
 	"""Get information about ELVEX SOCIAL"""
-	global debugger_mode
+	global isDebugger
 	global version
-	if not debugger_mode:
+	if not isDebugger:
 		return "FAILED"
 	print('Elvex SOCIAL v'+str(version))
 
@@ -572,13 +619,20 @@ def AddItemPool(item_code, min_price, max_price):
 	conn.close()
 	return "OK"
 
+def GetStoreItem(index):
+	"""Get store item by index."""
+	items = GetStoreItems()
+	if(index >= len(items)):
+		return "NO_SUCH_INDEX"
+	return items[index]
+
 # Checking dbs
 
 if not (os.path.isfile("users.db")):
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
 	c.execute('''CREATE TABLE users
-             (username text, passhash text, avatar int, electricity int, ppcount float, inventory text, customization text, bio text, stats text, banned boolean, regip text)''')
+             (username text, passhash text, avatar int, electricity int, ppcount float, inventory text, customization text, bio text, stats text, banned boolean, regip text, accessible boolean)''')
 	c.execute('''CREATE TABLE bannednames
 		(name text)''')
 	conn.commit()
@@ -606,7 +660,7 @@ if(platform.system() == "Windows"):
 	subprocess.check_call(["attrib","+H","additional.db"])
 if(len(sys.argv) > 1 and sys.argv[1] == "debugger"):
 	Logger("Debugger initialized.", CT.WARN)
-	debugger_mode = True
+	isDebugger = True
 	while(True):
 		oprint('> ',end='')
 		a = input()
