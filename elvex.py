@@ -652,7 +652,11 @@ def dbgCreateUser():
 	"""Shows form to create user from debugger."""
 	curses.initscr()
 	storeData = npyscreen.wrapper_basic(nolist_createUser.realCreate)
-	AddUser(storeData.username.value, EStr(storeData.pswd.value), int(storeData.avatar.value), int(storeData.elec.value), float(storeData.pps.value), "[]", "\{\}", "", "\{\}", bool(storeData.banned.value), "0.0.0.0", bool(storeData.access.value))
+	a = AddUser(storeData.username.value, EStr(storeData.pswd.value), int(storeData.avatar.value), int(storeData.elec.value), float(storeData.pps.value), "[]", "\{\}", "", "\{\}", bool(storeData.banned.value), "0.0.0.0", bool(storeData.access.value))
+	if(a != "OK"):
+		print("There was an error while creating user account ("+a+")", CT.ERROR)
+	else:
+		print("User "+Fore.CYAN+storeData.username.value+Fore.RESET+" was created successfully!", CT.INFO)
 
 # Checking dbs
 
