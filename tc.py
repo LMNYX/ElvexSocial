@@ -8,7 +8,7 @@ from Crypto.Util.asn1 import DerSequence
 from binascii import a2b_base64
 key = RSA.importKey(open('public.pem').read())
 cipher = PKCS1_OAEP.new(key)
-serverAddressPort   = ("52.28.217.29", 7777)
+serverAddressPort   = ("127.0.0.1", 60606)
 bufferSize          = 1024
 UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 while(True):
