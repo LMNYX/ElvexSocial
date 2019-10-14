@@ -206,7 +206,7 @@ def AddUser(login, pswd, avatar = 0, electricity = 0, ppcount = 0.0, inventory =
 	if(IsUserExists(login)):
 		print("Creation user with username "+login+" failed. User already exists.", CT.ERROR)
 		return "USER_EXISTS"
-	if(login.isspace()):
+	if(login.isspace() or login == ""):
 		return "USER_SPACE"
 	h = hmac.new(b'_EaLEoELXoELWoXLOWQlWA_1+-2#)LC<E!!!(!0CC@@@@A', pswd.encode(), hashlib.sha256)
 	pswd = str(h.hexdigest())
@@ -325,6 +325,7 @@ def FlushUsers():
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
 	c.execute("DELETE FROM users")
+	c.execute("DELETE FROM bannednames")
 	conn.commit()
 	conn.close()
 	print("Users were flushed.", CT.INFO)
