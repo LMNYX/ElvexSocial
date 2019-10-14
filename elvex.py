@@ -18,6 +18,7 @@ import inspect
 from OpenSSL import crypto, SSL
 from socket import gethostname
 from time import gmtime, mktime
+import npyscreen
 if(platform.system() == "Windows"):
 	import subprocess
 version = 3
@@ -47,6 +48,10 @@ def help():
 			except Exception:
 				continue
 			args = ', '.join(args)
+			if(name.startswith("nolist_")):
+				continue
+			if(name.startswith("dbg")):
+				name = Fore.CYAN + name + Fore.RESET
 			cmds += 1
 			if(str(val.__doc__) == "None"):
 				print(name + "(" + args + ") - No description.", CT.INFO)
@@ -626,6 +631,29 @@ def GetStoreItem(index):
 		return "NO_SUCH_INDEX"
 	return items[index]
 
+# -- Debugger-only tools
+
+class nolist_createUser(npyscreen.Form):
+	def create(self):
+		self.username = self.add(npyscreen.TitleText, name='Username')
+		self.pswd = self.add(npyscreen.TitlePassword, name='Password')
+		self.avatar = self.add(npyscreen.TitleSlider, name='Avatar', out_of=20,step=1,lowest=0)
+		self.elec = self.add(npyscreen.TitleSlider, name='Electricity',step=10000,out_of=1000000000,lowest=0)
+		self.pps = self.add(npyscreen.TitleSlider, name='PP', out_of=7401,step=1,lowest=0)
+		self.banned = self.add(npyscreen.CheckBox, name='Is banned?')
+		self.access = self.add(npyscreen.CheckBox, name='Is removed?')
+	def realCreate(*args):
+		f = nolist_createUser(name="New User")
+		f.edit()
+		return f
+
+
+def dbgCreateUser():
+	"""Shows form to create user from debugger."""
+	curses.initscr()
+	storeData = npyscreen.wrapper_basic(nolist_createUser.realCreate)
+	AddUser(storeData.username.value, EStr(storeData.pswd.value), int(storeData.avatar.value), int(storeData.elec.value), float(storeData.pps.value), "[]", "\{\}", "", "\{\}", bool(storeData.banned.value), "0.0.0.0", bool(storeData.access.value))
+
 # Checking dbs
 
 if not (os.path.isfile("users.db")):
@@ -660,11 +688,17 @@ if(platform.system() == "Windows"):
 	subprocess.check_call(["attrib","+H","additional.db"])
 if(len(sys.argv) > 1 and sys.argv[1] == "debugger"):
 	Logger("Debugger initialized.", CT.WARN)
+	import curses
+	isFormattedError = True
 	isDebugger = True
 	while(True):
 		oprint('> ',end='')
-		a = input()
-		try:
+		if(isFormattedError):
+			a = input()
+			try:
+				eval(a)
+			except Exception as e:
+				print(str(e), CT.ERROR)
+		else:
+			a = input()
 			eval(a)
-		except Exception as e:
-			print(str(e), CT.ERROR)

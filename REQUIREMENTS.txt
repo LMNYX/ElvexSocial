@@ -2,3 +2,4 @@ configparser
 colorama
 pyopenssl
 pycryptodome
+npyscreen
