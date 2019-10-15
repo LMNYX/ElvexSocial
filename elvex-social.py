@@ -94,103 +94,107 @@ try:
 except Exception:
 	print("Bad RSA key. Recreate it.", CT.ERROR)
 while(True):
-	bap = server.recvfrom(bufferSize)
-	message = str(cipher.decrypt(bap[0]))
-	message = message[:-1][2:]
-	address = bap[1]
-	print("Received packet from "+str(address[0])+" with size of "+str(address[1])+" bytes.", CT.INFO)
 	try:
-		fff = int(message)
-		del fff
-		Logger("It's int!", CT.WARN)
-		Response = EncodedString(json.dumps({'error': 'NOT_JSON'}))
-		server.sendto(Response, address)
-		continue
-	except Exception:
-		Logger("Woah! Everything is ok!")
-	if not (is_json(message)):
-		Response = EncodedString(json.dumps({'error': 'NOT_JSON'}))
-		server.sendto(Response, address)
-		continue
-	else:
-		jsonMessage = json.loads(message)
-	if('act' not in jsonMessage or 'args' not in jsonMessage):
-		Response = EncodedString(json.dumps({'error': 'NO_METHOD'}))
-		server.sendto(Response, address)
-		continue
-	if(jsonMessage['act'] == "account.Create"):
-		if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args']):
-			Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
+		asdasdsad()
+		bap = server.recvfrom(bufferSize)
+		message = str(cipher.decrypt(bap[0]))
+		message = message[:-1][2:]
+		address = bap[1]
+		print("Received packet from "+str(address[0])+" with size of "+str(address[1])+" bytes.", CT.INFO)
+		try:
+			fff = int(message)
+			del fff
+			Logger("It's int!", CT.WARN)
+			Response = EncodedString(json.dumps({'error': 'NOT_JSON'}))
+			server.sendto(Response, address)
+			continue
+		except Exception:
+			Logger("Woah! Everything is ok!")
+		if not (is_json(message)):
+			Response = EncodedString(json.dumps({'error': 'NOT_JSON'}))
+			server.sendto(Response, address)
+			continue
 		else:
-			r = AddUser(jsonMessage['args']['login'], jsonMessage['args']['pswd'],regip=str(address[0]))
-			if(r != "OK"):
-				Response = EncodedString(json.dumps({"error": r}))
+			jsonMessage = json.loads(message)
+		if('act' not in jsonMessage or 'args' not in jsonMessage):
+			Response = EncodedString(json.dumps({'error': 'NO_METHOD'}))
+			server.sendto(Response, address)
+			continue
+		if(jsonMessage['act'] == "account.Create"):
+			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args']):
+				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
 			else:
-				Response = EncodedString(json.dumps({'response':'OK'}))
-	elif(jsonMessage['act'] == 'account.checkPass'):
-		if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args']):
-			Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
-		else:
-			r = GetUser(jsonMessage['args']['login'], False)
-			if(r == "USER_GONE" or r == "USER_SPACE"):
-				Response = EncodedString(json.dumps({'error': r}))
-			else:
-				r = json.loads(r)
-				if(jsonMessage['args']['pswd'] != r[0][1]):
-					Response = EncodedString(json.dumps({'error':'BAD_PASSWORD'}))
+				r = AddUser(jsonMessage['args']['login'], jsonMessage['args']['pswd'],regip=str(address[0]))
+				if(r != "OK"):
+					Response = EncodedString(json.dumps({"error": r}))
 				else:
 					Response = EncodedString(json.dumps({'response':'OK'}))
-	elif(jsonMessage['act'] == 'account.get'):
-		if('login' not in jsonMessage['args']):
-			Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
-		else:
-			r = GetUser(jsonMessage['args']['login'])
-			if(r == "USER_GONE" or r == "USER_SPACE"):
-				Response = EncodedString(json.dumps({'error': r}))
+		elif(jsonMessage['act'] == 'account.checkPass'):
+			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args']):
+				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
 			else:
-				r = r
-				Response = EncodedString(json.dumps({'response': 'OK', '{}'.format(jsonMessage['args']['login']): {'login': r[0], 'avatar': r[1], 'electricity': r[2], 'pp': r[3], 'inventory': json.loads(r[4]), 'customization': json.loads(r[5]), 'bio': r[6], 'stats': json.loads(r[7]), 'banned': bool(r[8])}}))
-	elif(jsonMessage['act'] == 'inventory.setCustomization'):
-		if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args'] or 'slot' not in jsonMessage['args'] or 'item' not in jsonMessage['args']):
-			Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
-		else:
-			r = GetUser(jsonMessage['args']['login'])
-			if(r == "USER_GONE" or r == "USER_SPACE"):
-				Response = EncodedString(json.dumps({'error': r}))
-			else:
-				r = json.loads(r)
-				inv = r[4]
-				if(jsonMessage['args']['item'] not in inv):
-					Response = EncodedString(json.dumps({'error':'NO_ITEM'}))
+				r = GetUser(jsonMessage['args']['login'], False)
+				if(r == "USER_GONE" or r == "USER_SPACE"):
+					Response = EncodedString(json.dumps({'error': r}))
 				else:
-					SetCustomizationUser(r[0], jsonMessage['args']['slot'], jsonMessage['args']['item'])
-					Response = EncodedString(json.dumps({'response':'OK'}))
-	elif(jsonMessage['act'] == "market.get"):
-		Response = EncodedString(json.dumps({'response': 'OK', 'items': GetStoreItems()}))
-	elif(jsonMessage['act'] == "market.buy"):
-		if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args'] or 'slot' not in jsonMessage['args']):
-			Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
-		else:
-			StoreItems = GetStoreItems()
-			try:
-				tttt = int(jsonMessage['args']['slot'])
-				del tttt
+					r = json.loads(r)
+					if(jsonMessage['args']['pswd'] != r[0][1]):
+						Response = EncodedString(json.dumps({'error':'BAD_PASSWORD'}))
+					else:
+						Response = EncodedString(json.dumps({'response':'OK'}))
+		elif(jsonMessage['act'] == 'account.get'):
+			if('login' not in jsonMessage['args']):
+				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
+			else:
 				r = GetUser(jsonMessage['args']['login'])
 				if(r == "USER_GONE" or r == "USER_SPACE"):
 					Response = EncodedString(json.dumps({'error': r}))
 				else:
-					r = GetStoreItem(int(jsonMessage['args']['slot']))
-					if(type(r) == str):
-						Response = EncodedString(json.dumps({'error': 'NO_INDEX_ITEM'}))
+					r = r
+					Response = EncodedString(json.dumps({'response': 'OK', '{}'.format(jsonMessage['args']['login']): {'login': r[0], 'avatar': r[1], 'electricity': r[2], 'pp': r[3], 'inventory': json.loads(r[4]), 'customization': json.loads(r[5]), 'bio': r[6], 'stats': json.loads(r[7]), 'banned': bool(r[8])}}))
+		elif(jsonMessage['act'] == 'inventory.setCustomization'):
+			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args'] or 'slot' not in jsonMessage['args'] or 'item' not in jsonMessage['args']):
+				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
+			else:
+				r = GetUser(jsonMessage['args']['login'])
+				if(r == "USER_GONE" or r == "USER_SPACE"):
+					Response = EncodedString(json.dumps({'error': r}))
+				else:
+					r = json.loads(r)
+					inv = r[4]
+					if(jsonMessage['args']['item'] not in inv):
+						Response = EncodedString(json.dumps({'error':'NO_ITEM'}))
 					else:
-						if(GetUserBalance(jsonMessage['args']['login']) < r[1]):
-							Response = EncodedString(json.dumps({'error': 'NOT_ENOUGH_CASH'}))
+						SetCustomizationUser(r[0], jsonMessage['args']['slot'], jsonMessage['args']['item'])
+						Response = EncodedString(json.dumps({'response':'OK'}))
+		elif(jsonMessage['act'] == "market.get"):
+			Response = EncodedString(json.dumps({'response': 'OK', 'items': GetStoreItems()}))
+		elif(jsonMessage['act'] == "market.buy"):
+			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args'] or 'slot' not in jsonMessage['args']):
+				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
+			else:
+				StoreItems = GetStoreItems()
+				try:
+					tttt = int(jsonMessage['args']['slot'])
+					del tttt
+					r = GetUser(jsonMessage['args']['login'])
+					if(r == "USER_GONE" or r == "USER_SPACE"):
+						Response = EncodedString(json.dumps({'error': r}))
+					else:
+						r = GetStoreItem(int(jsonMessage['args']['slot']))
+						if(type(r) == str):
+							Response = EncodedString(json.dumps({'error': 'NO_INDEX_ITEM'}))
 						else:
-							EditUser(jsonMessage['args']['login'], "electricity", GetUserBalance(jsonMessage['args']['login'])-r[1])
-							AddInvUser(jsonMessage['args']['login'], r[0])
-							Response = EncodedString(json.dumps({'response':'OK'}))
-			except Exception:
-				Response = EncodedString(json.dumps({'error':'INVALID_ARG'}))
-	else:
-		Response = EncodedString(json.dumps({'error': 'BAD_REQUEST'}))
-	server.sendto(Response, address)
+							if(GetUserBalance(jsonMessage['args']['login']) < r[1]):
+								Response = EncodedString(json.dumps({'error': 'NOT_ENOUGH_CASH'}))
+							else:
+								EditUser(jsonMessage['args']['login'], "electricity", GetUserBalance(jsonMessage['args']['login'])-r[1])
+								AddInvUser(jsonMessage['args']['login'], r[0])
+								Response = EncodedString(json.dumps({'response':'OK'}))
+				except Exception:
+					Response = EncodedString(json.dumps({'error':'INVALID_ARG'}))
+		else:
+			Response = EncodedString(json.dumps({'error': 'BAD_REQUEST'}))
+		server.sendto(Response, address)
+	except Exception as e:
+		print("Uh oh! Error approaches! ("+str(e)+")", CT.ERROR)
