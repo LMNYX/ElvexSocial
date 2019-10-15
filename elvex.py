@@ -204,7 +204,7 @@ def EStr(stre):
 	a = hmac.new(b'_EaLEoELXoELWoXLOWQlWA_1+-2#)LC<E!!!(!0CC@@@@A', stre.encode(), hashlib.sha256)
 	return str(a.hexdigest())
 
-def AddUser(login, pswd, avatar = 0, electricity = 0, ppcount = 0.0, inventory = "[]", customization = '{"droidColor": "blue", "lampColor": "blue","hat": "none", "body": "none", "hands": "none", "legs": "none"}', bio = "Not specified.", stats = "{}", banned = False, regip = "0.0.0.0", accessible = True):
+def AddUser(login, pswd, avatar = 0, electricity = 0, ppcount = 0.0, inventory = "[]", customization = '{"droidColor": "blue", "lampColor": "blue","hat": "none", "body": "none", "hands": "none", "legs": "none"}', bio = "Not specified.", stats = "{}", banned = False, regip = "0.0.0.0", accessible = True, ban_reason = -1):
 	"""Create user in Elvex DB."""
 	if(IsUserExists(login)):
 		print("Creation user with username "+login+" failed. User already exists.", CT.ERROR)
@@ -221,7 +221,7 @@ def AddUser(login, pswd, avatar = 0, electricity = 0, ppcount = 0.0, inventory =
 	if(r.fetchone()):
 		return "NAME_BANNED"
 	#        TEXT, TEXT, INT, FLOAT, TEXT, TEXT, TEXT, TEXT, BOOL, TEXT
-	c.execute("INSERT INTO users VALUES ('{}', '{}', {}, {}, {}, '{}', '{}', '{}', '{}', {}, '{}', {})".format(login, pswd, str(avatar), str(electricity), str(ppcount),inventory, customization,bio, stats, str(banned), regip, str(accessible)))
+	c.execute("INSERT INTO users VALUES ('{}', '{}', {}, {}, {}, '{}', '{}', '{}', '{}', {}, '{}', {}, {})".format(login, pswd, str(avatar), str(electricity), str(ppcount),inventory, customization,bio, stats, str(banned), regip, str(accessible), str(ban_reason)))
 	conn.commit()
 	conn.close()
 	return "OK"
@@ -280,7 +280,7 @@ def ListUsers()->'User list':
 		print("- "+b[0])
 	conn.close()
 
-def BanUser(login):
+def BanUser(login,reason = -1):
 	"""Ban player from Elvex."""
 	if not (IsUserExists(login)):
 		print("Ban failed. User doesn't exists. ("+login+")", CT.ERROR)
@@ -290,6 +290,7 @@ def BanUser(login):
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
 	c.execute("UPDATE users SET banned = true WHERE username = '{}'".format(login))
+	c.execute("UPDATE users SET ban_reason = {} WHERE username = '{}'".format(reason,login))
 	conn.commit()
 	conn.close()
 	return "OK"
@@ -334,12 +335,36 @@ def FlushUsers():
 	print("Users were flushed.", CT.INFO)
 	flushing = False
 
+def IsUserBanned(username):
+	"""Check if user is banned or no."""
+	conn = sqlite3.connect('users.db')
+	c = conn.cursor()
+	a = c.execute("SELECT banned FROM users WHERE username = '{}'".format(username))
+	a = bool(a.fetchone()[0])
+	conn.close()
+	return a
+
+def GetBanReason(username):
+	"""Get reason of ban for user."""
+	if not IsUserExists(username):
+		return "USER_GONE"
+	if not IsUserBanned(username):
+		return "USER_LAW"
+	conn = sqlite3.connect('users.db')
+	c = conn.cursor()
+	a = c.execute("SELECT ban_reason FROM users WHERE username = '{}'".format(username))
+	a = a.fetchone()[0]
+	conn.close()
+	return a
+
 def GetUser(username, safe = True):
 	"""Get user by name."""
 	global isDebugger
 	if not (IsUserExists(username)):
 		print("Tried to get user, but user with that name doesn't exists. ("+username+")", CT.ERROR)
 		return "USER_GONE"
+	elif IsUserBanned(username) and not isDebugger:
+		return "USER_BANNED"
 	elif not IsAccessibleUser(username) and not isDebugger:
 		return "USER_GONE"
 	if(username.isspace()):
@@ -419,9 +444,12 @@ def SetCustomizationUser(username, n, h):
 
 def EditUserPassword(username, currentPass, newPass):
 	"""Edit password of user (needs old)."""
+	global isDebugger
 	if not (IsUserExists(username)):
 		print("Tried to change user's password, but user with that name doesn't exists. ("+username+")", CT.ERROR)
 		return "USER_GONE"
+	elif IsUserBanned(username) and not isDebugger:
+		return "USER_BANNED"
 	if(username.isspace()):
 		return "USER_SPACE"
 	conn = sqlite3.connect("users.db")
@@ -473,9 +501,12 @@ def ChangeUserStat(username,stat,to):
 
 def EditUser(username, what, how):
 	"""Edit user account."""
+	global isDebugger
 	if not (IsUserExists(username)):
 		print("Tried to edit user, but user with that name doesn't exists. ("+username+")", CT.ERROR)
 		return "USER_GONE"
+	elif IsUserBanned(username) and not isDebugger:
+		return "USER_BANNED"
 	if(username.isspace()):
 		return "USER_SPACE"
 	stringlets = ["username", "bio"]
@@ -675,7 +706,7 @@ if not (os.path.isfile("users.db")):
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
 	c.execute('''CREATE TABLE users
-             (username text, passhash text, avatar int, electricity int, ppcount float, inventory text, customization text, bio text, stats text, banned boolean, regip text, accessible boolean)''')
+             (username text, passhash text, avatar int, electricity int, ppcount float, inventory text, customization text, bio text, stats text, banned boolean, regip text, accessible boolean,ban_reason int)''')
 	c.execute('''CREATE TABLE bannednames
 		(name text)''')
 	conn.commit()
