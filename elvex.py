@@ -36,14 +36,10 @@ try:
 except Exception:
 	Void()
 
-if(platform.system() == "Windows"):
-	def clear():
-		"""Clear the output."""
-		os.system("cls")
-else:
-	def clear():
-		"""Clear the output."""
-		os.system("clear")
+def clear():
+	"""Clear the output."""
+	if(platform.system() == "Windows"): os.system("cls")
+	else: os.system("clear")
 
 NotList = ["Void","Enum", "gmtime", "strftime", "init", "ohelp", "CT", "oprint", "round50", "create_self_signed_cert","completer","v"]
 def help():
