@@ -26,8 +26,14 @@ except ImportError:
 import npyscreen
 if(platform.system() == "Windows"):
 	import subprocess
+
+db_AdditionalsVer = 1
+db_usersVer = 1
 version = 3
 oprint = print
+
+
+
 def Void():
 	umm = "umm"
 	del umm
@@ -709,6 +715,10 @@ if not (os.path.isfile("users.db")):
              (username text, passhash text, avatar int, electricity int, ppcount float, inventory text, customization text, bio text, stats text, banned boolean, regip text, accessible boolean,ban_reason int)''')
 	c.execute('''CREATE TABLE bannednames
 		(name text)''')
+	c.execute('''CREATE TABLE db_info
+             (st text, data int)''')
+	c.execute('''INSERT INTO time_storage VALUES ('store_update', 0)''')
+	c.execute('''INSERT INTO db_info VALUES ('ver', {})'''.format(str(db_usersVer)))
 	conn.commit()
 	conn.close()
 	Logger("Created new user database, because users.db was missing.", CT.INFO)
@@ -724,7 +734,10 @@ if not (os.path.isfile("additional.db")):
              (item_code text, price int)''')
 	c.execute('''CREATE TABLE time_storage
              (sett text, unix int)''')
+	c.execute('''CREATE TABLE db_info
+             (st text, data int)''')
 	c.execute('''INSERT INTO time_storage VALUES ('store_update', 0)''')
+	c.execute('''INSERT INTO db_info VALUES ('ver', {})'''.format(str(db_AdditionalsVer)))
 	conn.commit()
 	conn.close()
 	Logger("Created new additionals database, because additional.db was missing.", CT.INFO)
@@ -819,6 +832,34 @@ def dbgNoDebug():
 	isDebugger = False
 	print("You are now moron.")
 	return
+
+conn = sqlite3.connect('users.db')
+c = conn.cursor()
+try:
+	dInfo = c.execute("SELECT data FROM db_info WHERE st = 'ver'")
+	dInfo = dInfo.fetchone()[0]
+except Exception:
+	print("Your version of users.db is very out of date. Please"+Fore.RED+" recreate "+Fore.RESET+"it ASAP.", CT.ERROR)
+	dInfo = db_usersVer
+if(dInfo > db_usersVer):
+	print("Your version of users.db is out of date. Please be sure to recreate it or update.", CT.WARN)
+elif(dInfo < db_usersVer):
+	print("Your version of users.db is newer than this ELVEX SOCIAL version requires. Something may be broken.", CT.WARN)
+conn.close()
+conn = sqlite3.connect('additional.db')
+c = conn.cursor()
+try:
+	dInfo = c.execute("SELECT data FROM db_info WHERE st = 'ver'")
+	dInfo = dInfo.fetchone()[0]
+except Exception:
+	print("Your version of additional.db is very out of date. Please"+Fore.RED+" recreate "+Fore.RESET+"it ASAP.", CT.ERROR)
+	dInfo = db_AdditionalsVer
+
+if(dInfo > db_AdditionalsVer):
+	print("Your version of additional.db is out of date. Please be sure to recreate it or update.", CT.WARN)
+elif(dInfo < db_AdditionalsVer):
+	print("Your version of additional.db is newer than this ELVEX SOCIAL version requires. Something may be broken.", CT.WARN)
+conn.close()
 
 if(len(sys.argv) > 1 and sys.argv[1] == "debugger"):
 	Logger("Debugger initialized.", CT.WARN)
