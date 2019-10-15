@@ -644,7 +644,7 @@ class nolist_createUser(npyscreen.Form):
 		self.pswd = self.add(npyscreen.TitlePassword, name='Password')
 		self.avatar = self.add(npyscreen.TitleSlider, name='Avatar', out_of=20,step=1,lowest=0)
 		self.elec = self.add(npyscreen.TitleSlider, name='Electricity',step=10000,out_of=1000000000,lowest=0)
-		self.pps = self.add(npyscreen.TitleSlider, name='PP', out_of=7401,step=1,lowest=0)
+		self.pps = self.add(npyscreen.TitleSlider, name='PP', out_of=7450,step=50,lowest=0)
 		self.banned = self.add(npyscreen.CheckBox, name='Is banned?')
 		self.access = self.add(npyscreen.CheckBox, name='Is removed?')
 	def realCreate(*args):
@@ -654,6 +654,7 @@ class nolist_createUser(npyscreen.Form):
 
 def dbgCreateUser():
 	"""Shows form to create user from debugger."""
+	if not(isDebugger): return
 	curses.initscr()
 	storeData = npyscreen.wrapper_basic(nolist_createUser.realCreate)
 	a = AddUser(storeData.username.value, EStr(storeData.pswd.value), int(storeData.avatar.value), int(storeData.elec.value), float(storeData.pps.value), "[]", "\{\}", "", "\{\}", bool(storeData.banned.value), "0.0.0.0", bool(storeData.access.value))
