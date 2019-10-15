@@ -717,7 +717,6 @@ if not (os.path.isfile("users.db")):
 		(name text)''')
 	c.execute('''CREATE TABLE db_info
              (st text, data int)''')
-	c.execute('''INSERT INTO time_storage VALUES ('store_update', 0)''')
 	c.execute('''INSERT INTO db_info VALUES ('ver', {})'''.format(str(db_usersVer)))
 	conn.commit()
 	conn.close()
@@ -841,9 +840,9 @@ try:
 except Exception:
 	print("Your version of users.db is very out of date. Please"+Fore.RED+" recreate "+Fore.RESET+"it ASAP.", CT.ERROR)
 	dInfo = db_usersVer
-if(dInfo > db_usersVer):
+if(dInfo < db_usersVer):
 	print("Your version of users.db is out of date. Please be sure to recreate it or update.", CT.WARN)
-elif(dInfo < db_usersVer):
+elif(dInfo > db_usersVer):
 	print("Your version of users.db is newer than this ELVEX SOCIAL version requires. Something may be broken.", CT.WARN)
 conn.close()
 conn = sqlite3.connect('additional.db')
@@ -855,9 +854,9 @@ except Exception:
 	print("Your version of additional.db is very out of date. Please"+Fore.RED+" recreate "+Fore.RESET+"it ASAP.", CT.ERROR)
 	dInfo = db_AdditionalsVer
 
-if(dInfo > db_AdditionalsVer):
+if(dInfo < db_AdditionalsVer):
 	print("Your version of additional.db is out of date. Please be sure to recreate it or update.", CT.WARN)
-elif(dInfo < db_AdditionalsVer):
+elif(dInfo > db_AdditionalsVer):
 	print("Your version of additional.db is newer than this ELVEX SOCIAL version requires. Something may be broken.", CT.WARN)
 conn.close()
 
