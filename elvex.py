@@ -333,8 +333,8 @@ def FlushUsers():
 	flushing = False
 
 def GetUser(username, safe = True):
-	global isDebugger
 	"""Get user by name."""
+	global isDebugger
 	if not (IsUserExists(username)):
 		print("Tried to get user, but user with that name doesn't exists. ("+username+")", CT.ERROR)
 		return "USER_GONE"
