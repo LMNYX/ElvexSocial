@@ -41,7 +41,7 @@ def clear():
 	if(platform.system() == "Windows"): os.system("cls")
 	else: os.system("clear")
 
-NotList = ["Void","Enum", "gmtime", "strftime", "init", "ohelp", "CT", "oprint", "round50", "create_self_signed_cert","completer","v", "dbgSwitchErrorDisplay"]
+NotList = ["Void","Enum", "gmtime", "strftime", "init", "ohelp", "CT", "oprint", "round50", "create_self_signed_cert","completer","v", "dbgSwitchErrorDisplay", "dbgNoDebug"]
 def help():
 	"""List of all functions."""
 	global NotList
@@ -774,6 +774,15 @@ def dbgSwitchErrorDisplay():
 	isFormattedError = not isFormattedError
 	if(isFormattedError): print("Set formatting to "+Fore.CYAN+"PRETTY"+Fore.RESET+".")
 	else: print("Set formatting to "+Fore.CYAN+"INFORMATIVE"+Fore.RESET+".")
+
+def dbgNoDebug():
+	global isDebugger
+	if not isDebugger:
+		print("You can only LEAVE debugger, not ENTER.")
+		return
+	isDebugger = False
+	print("You are now moron.")
+	return
 
 if(len(sys.argv) > 1 and sys.argv[1] == "debugger"):
 	Logger("Debugger initialized.", CT.WARN)
