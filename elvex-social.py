@@ -138,7 +138,7 @@ while(True):
 					Response = EncodedString(json.dumps({'error': r}))
 				else:
 					r = json.loads(r)
-					if(jsonMessage['args']['pswd'] != r[0][1]):
+					if(EStr(jsonMessage['args']['pswd']) != r[1]):
 						Response = EncodedString(json.dumps({'error':'BAD_PASSWORD'}))
 					else:
 						Response = EncodedString(json.dumps({'response':'OK'}))
@@ -167,6 +167,23 @@ while(True):
 					else:
 						SetCustomizationUser(r[0], jsonMessage['args']['slot'], jsonMessage['args']['item'])
 						Response = EncodedString(json.dumps({'response':'OK'}))
+		elif jsonMessage['act'] == "account.getBanReason":
+			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args']):
+				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
+			else:
+				r = GetUser(jsonMessage['args']['login'], False)
+				if(type(r) == str):
+					Response = EncodedString(json.dumps({'error':r}))
+				elif(EStr(jsonMessage['args']['pswd']) != r[1]):
+					Response = EncodedString(json.dumps({'error':'WRONG_PASS'}))
+				else:
+					r = GetBanReason(jsonMessage['args']['login'])
+					if(type(r) == str):
+						Response = EncodedString(json.dumps({'error':r}))
+					elif(type(r) == int):
+						Response = EncodedString(json.dumps({'response':'OK', 'ban_reason': r}))
+					else:
+						Response = EncodedString(json.dumps({'error':'UNKNOWN_TYPE'}))
 		elif(jsonMessage['act'] == "market.get"):
 			Response = EncodedString(json.dumps({'response': 'OK', 'items': GetStoreItems()}))
 		elif jsonMessage['act'] == "market.getTimer":
