@@ -41,7 +41,7 @@ def clear():
 	if(platform.system() == "Windows"): os.system("cls")
 	else: os.system("clear")
 
-NotList = ["Void","Enum", "gmtime", "strftime", "init", "ohelp", "CT", "oprint", "round50", "create_self_signed_cert","completer","v"]
+NotList = ["Void","Enum", "gmtime", "strftime", "init", "ohelp", "CT", "oprint", "round50", "create_self_signed_cert","completer","v", "dbgSwitchErrorDisplay"]
 def help():
 	"""List of all functions."""
 	global NotList
@@ -767,7 +767,9 @@ for k,v in npid.items():
 	Logger("[PID {}]: {}".format(str(k), v))
 Logger("-----------------------")
 
-
+def dbgSwitchErrorDisplay():
+	global isFormattedError
+	isFormattedError = not isFormattedError
 
 if(len(sys.argv) > 1 and sys.argv[1] == "debugger"):
 	Logger("Debugger initialized.", CT.WARN)
