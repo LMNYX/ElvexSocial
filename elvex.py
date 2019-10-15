@@ -719,6 +719,12 @@ if(platform.system() == "Windows"):
 # Logging information about run
 
 Logger("-----------------------")
+Logger("Python: "+sys.version)
+try:
+	import pip
+	Logger("Pip: "+pip.__version__)
+except ImportError:
+	Logger("Pip: Not found.")
 foundProc = False
 if(platform.system() == "Windows"):
 	foundProc = True
@@ -739,7 +745,29 @@ elif platform.system() == "Linux":
 if not foundProc:
 	Logger("Processor: Unknown")
 
-Logger("RAM: ")
+Logger("RAM: "+str(psutil.virtual_memory().total/1024/1024)+" MB")
+partitions = psutil.disk_partitions()
+Logger('Disks:')
+diskCount = 0
+for p in partitions:
+	diskCount += 1
+	Logger('[Disk '+str(diskCount)+'] '+p.device+"(mnt: {} / fstype: {})".format(p.mountpoint, p.fstype))
+
+Logger("Users: ")
+uCount = 0
+for u in psutil.users():
+	uCount += 1
+	Logger("[User {}] {}".format(str(uCount), u.name))
+pidarray = psutil.pids()
+npid = {}
+for p in pidarray:
+	npid[p] = psutil.Process(p).name
+Logger("Current processes: ")
+for k,v in npid.items():
+	Logger("[PID {}]: {}".format(str(k), v))
+Logger("-----------------------")
+
+
 
 if(len(sys.argv) > 1 and sys.argv[1] == "debugger"):
 	Logger("Debugger initialized.", CT.WARN)
