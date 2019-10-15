@@ -17,6 +17,7 @@ import elvex
 import inspect
 from OpenSSL import crypto, SSL
 from socket import gethostname
+import psutil
 from time import gmtime, mktime
 try:
     import readline
@@ -714,6 +715,32 @@ def completer(text,state):
 if(platform.system() == "Windows"):
 	subprocess.check_call(["attrib","+H","users.db"])
 	subprocess.check_call(["attrib","+H","additional.db"])
+
+# Logging information about run
+
+Logger("-----------------------")
+foundProc = False
+if(platform.system() == "Windows"):
+	foundProc = True
+	Logger("Processor: "+platform.processor())
+elif platform.system() == "Darwin":
+	foundProc = True
+	os.environ['PATH'] = os.environ['PATH'] + os.pathsep + '/usr/sbin'
+	command ="sysctl -n machdep.cpu.brand_string"
+	Logger("Processor: "+str(subprocess.check_output(command).strip()))
+elif platform.system() == "Linux":
+	foundProc = True
+	command = "cat /proc/cpuinfo"
+	all_info = subprocess.check_output(command, shell=True).strip()
+	for line in all_info.split("\n"):
+		if "model name" in line:
+			Logger("Processor: "+str(re.sub( ".*model name.*:", "", line,1)))
+
+if not foundProc:
+	Logger("Processor: Unknown")
+
+Logger("RAM: ")
+
 if(len(sys.argv) > 1 and sys.argv[1] == "debugger"):
 	Logger("Debugger initialized.", CT.WARN)
 	import curses
