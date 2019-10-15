@@ -666,6 +666,9 @@ def dbgCreateUser():
 	else:
 		print("User "+Fore.CYAN+storeData.username.value+Fore.RESET+" was created successfully!", CT.INFO)
 
+def CalculatePP(kills, damageDealt, deaths, takenDamage):
+	return ((kills * 0.25 + kills * 1.885025) + (damageDealt * 0.015550)) - (deaths * 6.885725) - (takenDamage * 0.27)
+
 # Checking dbs
 
 if not (os.path.isfile("users.db")):
