@@ -10,7 +10,7 @@ Official ELVEX SOCIAL server.
 To start server use: `elvex.py`, to startup the administration panel use `elvex-social.py debugger`.
 
 ## Insallation
-1. Clone the repository ( `git clone https://github.com/lmnyx/ElvexSocialServer.git` )
+1. Download release build from Releases page or clone the repository to get development build ( `git clone https://github.com/lmnyx/ElvexSocialServer.git` )
 2. Install Python 3.7+
 3. Run `pip install -r REQUIREMENTS.txt` in the clone directory.
 4. If you are on Windows you need to run additionally: `pip install windows-curses`
