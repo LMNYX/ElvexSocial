@@ -169,6 +169,8 @@ while(True):
 						Response = EncodedString(json.dumps({'response':'OK'}))
 		elif(jsonMessage['act'] == "market.get"):
 			Response = EncodedString(json.dumps({'response': 'OK', 'items': GetStoreItems()}))
+		elif jsonMessage['act'] == "market.getTimer":
+			Response = EncodedString(json.dumps({'response': 'OK', 'seconds_left': GetStoreTimer()}))
 		elif(jsonMessage['act'] == "market.buy"):
 			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args'] or 'slot' not in jsonMessage['args']):
 				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
