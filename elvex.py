@@ -45,6 +45,8 @@ NotList = ["Void","Enum", "gmtime", "strftime", "init", "ohelp", "CT", "oprint",
 def help():
 	"""List of all functions."""
 	global NotList
+	if not(isDebugger):
+		return
 	cmds = 0
 	for name, val in elvex.__dict__.items():
 		if callable(val) and name not in NotList:
