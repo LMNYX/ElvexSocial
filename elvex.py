@@ -769,7 +769,11 @@ Logger("-----------------------")
 
 def dbgSwitchErrorDisplay():
 	global isFormattedError
+	global isDebugger
+	if not(isDebugger): return
 	isFormattedError = not isFormattedError
+	if(isFormattedError): print("Set formatting to "+Fore.CYAN+"PRETTY"+Fore.RESET+".")
+	else: print("Set formatting to "+Fore.CYAN+"INFORMATIVE"+Fore.RESET+".")
 
 if(len(sys.argv) > 1 and sys.argv[1] == "debugger"):
 	Logger("Debugger initialized.", CT.WARN)
