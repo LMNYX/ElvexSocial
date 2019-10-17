@@ -676,6 +676,26 @@ def GetStoreItem(index):
 		return "NO_SUCH_INDEX"
 	return items[index]
 
+def ChanceTry(chance):
+	"""Try the percentage chance."""
+	return random.randrange(0,100) < chance
+
+def GetCrateItem(crate_code):
+	"""Get random item of crate."""
+	conn = sqlite3.connect("additional.db")
+	c = conn.cursor()
+	cr = c.execute("SELECT items_in FROM crates WHERE item_code = '{}'".format(crate_code))
+	cr = cr.fetchone()[0]
+	cr = json.loads(cr)
+	cr = sorted(cr.items(), key=lambda x: x[1])
+	ItemCode_Result = ""
+	while ItemCode_Result == "":
+		for i in cr:
+			a = ChanceTry(i[1])
+			if(a):
+				ItemCode_Result = i[0]
+	return ItemCode_Result
+
 # -- Debugger-only tools
 
 class nolist_createUser(npyscreen.Form):
