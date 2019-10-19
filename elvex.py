@@ -724,7 +724,8 @@ def dbgCreateUser():
 		print("User "+Fore.CYAN+storeData.username.value+Fore.RESET+" was created successfully!", CT.INFO)
 
 def CalculatePP(kills, damageDealt, deaths, takenDamage):
-	return ((kills * 0.25 + kills * 1.885025) + (damageDealt * 0.015550)) - (deaths * 6.885725) - (takenDamage * 0.27)
+	"""Calculate PP."""
+	return ((kills * 0.33 + kills * 1.995025) + (damageDealt * 0.008550)) - (deaths * 5.585725) - (takenDamage * 0.27)
 
 # Checking dbs
 
@@ -888,7 +889,7 @@ if(len(sys.argv) > 1 and sys.argv[1] == "debugger"):
 	readline.parse_and_bind("tab: complete")
 	readline.set_completer(completer)
 	while(True):
-		oprint('> ',end='')
+		oprint(Fore.CYAN+ '> '+Fore.RESET,end='')
 		if(isFormattedError):
 			a = input()
 			try:
