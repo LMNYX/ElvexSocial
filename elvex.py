@@ -5,6 +5,7 @@ from time import gmtime, strftime
 from colorama import Fore, Back, init
 import random
 import sys
+import math
 import json
 import sqlite3
 import platform
@@ -724,8 +725,14 @@ def dbgCreateUser():
 		print("User "+Fore.CYAN+storeData.username.value+Fore.RESET+" was created successfully!", CT.INFO)
 
 def CalculatePPv2(dmgDealt, dmgTaken, supportPoints):
-	bonus = supportPoints - supportPoints ** 0.25
-	return (dmgDealt ** 1.25 - dmgTaken ** 1.2589)/10.5+bonus
+	if(supportPoints == 0): bonus = -5
+	elif(supportPoints > 0):
+		bonus = (math.factorial(supportPoints)/10.520004+math.log10(supportPoints))+math.cos(supportPoints)-math.atan2(-(supportPoints), supportPoints)+(math.radians(supportPoints)**1.2)+math.hypot(supportPoints, supportPoints*1.567622)
+	else:
+		supportPoints = math.fabs(supportPoints)
+		bonus = (math.factorial(supportPoints)/10.520004+math.log10(supportPoints))+math.cos(supportPoints)-math.atan2(-(supportPoints), supportPoints)+(math.radians(supportPoints)**1.2)+math.hypot(supportPoints, supportPoints*1.567622)
+		bonus = -(bonus)
+	return -3 + (dmgDealt ** 1.25 - dmgTaken ** 1.2589)/10.5+bonus
 
 # Checking dbs
 
