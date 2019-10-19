@@ -727,6 +727,9 @@ def CalculatePP(kills, damageDealt, deaths, takenDamage):
 	"""Calculate PP."""
 	return ((kills * 0.33 + kills * 1.995025) + (damageDealt * 0.008550)) - (deaths * 5.585725) - (takenDamage * 0.27)
 
+def CalculatePPv2(dmgDealt, dmgTaken):
+	return (dmgDealt ** 1.25 - dmgTaken ** 1.2589)/10.5
+
 # Checking dbs
 
 if not (os.path.isfile("users.db")):
