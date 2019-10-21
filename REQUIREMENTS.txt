@@ -5,3 +5,5 @@ pyopenssl
 pycryptodome
 npyscreen
 psutil
+requests
+pystray

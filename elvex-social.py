@@ -17,7 +17,12 @@ from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
 from Crypto.Util.asn1 import DerSequence
 from binascii import a2b_base64
-
+from PIL import Image, ImageDraw
+from pystray import Icon as icon, Menu as menu, MenuItem as item
+import requests
+from io import BytesIO
+import psutil
+oprint("")
 
 Logger("Python importing complete.", CT.INFO)
 
@@ -93,11 +98,79 @@ try:
 	cipher = PKCS1_OAEP.new(key)
 except Exception:
 	print("Bad RSA key. Recreate it.", CT.ERROR)
+state=False
+
+decryptMessages = True
+
+class trayActions:
+	def none():
+		AN = "AN"
+		del AN
+	def switchDecryption():
+		global decryptMessages
+		decryptMessages = not decryptMessages
+		if(decryptMessages): print("Messages now decrypts when received!")
+		else: print("Messages now expected to be not encrypted.")
+	def restart():
+		print("Restarting the Elvex SOCIAL server.", CT.WARN)
+		try:
+			p = psutil.Process(os.getpid())
+			for handler in p.get_open_files() + p.connections():
+				os.close(handler.fd)
+		except Exception as e:
+			void1 = "void"
+			del void1
+		python = sys.executable
+		os.execl(python, python, *sys.argv)
+	def exit():
+		os._exit(1)
+	def checkDBs():
+		conn = sqlite3.connect('users.db')
+		c = conn.cursor()
+		try:
+			dInfo = c.execute("SELECT data FROM db_info WHERE st = 'ver'")
+			dInfo = dInfo.fetchone()[0]
+		except Exception:
+			print("Your version of users.db is very out of date. Please"+Fore.RED+" recreate "+Fore.RESET+"it ASAP.", CT.ERROR)
+			dInfo = db_usersVer
+		if(dInfo < db_usersVer):
+			print("Your version of users.db is out of date. Please be sure to recreate it or update.", CT.WARN)
+		elif(dInfo > db_usersVer):
+			print("Your version of users.db is newer than this ELVEX SOCIAL version requires. Something may be broken.", CT.WARN)
+		else:
+			print("Users.db is up to date!")
+		conn.close()
+		conn = sqlite3.connect('additional.db')
+		c = conn.cursor()
+		try:
+			dInfo = c.execute("SELECT data FROM db_info WHERE st = 'ver'")
+			dInfo = dInfo.fetchone()[0]
+		except Exception:
+			print("Your version of additional.db is very out of date. Please"+Fore.RED+" recreate "+Fore.RESET+"it ASAP.", CT.ERROR)
+			dInfo = db_AdditionalsVer
+
+		if(dInfo < db_AdditionalsVer):
+			print("Your version of additional.db is out of date. Please be sure to recreate it or update.", CT.WARN)
+		elif(dInfo > db_AdditionalsVer):
+			print("Your version of additional.db is newer than this ELVEX SOCIAL version requires. Something may be broken.", CT.WARN)
+		else:
+			print("Additional.db is up to date!")
+		conn.close()
+		print("DBs checking was finished!")
+icon('elvex', Image.open(BytesIO(requests.get("https://avatars3.githubusercontent.com/u/56801454?s=400&u=0ca69763a92ebb07e3bcf1264d17eaed40682467&v=4").content)), menu=menu(
+	item('-- Elvex SOCIAL v'+str(version),trayActions.none, enabled=False),
+	item('Check DBs for corruption', trayActions.checkDBs),
+	item('Decrypt messages', trayActions.switchDecryption, checked=lambda item: decryptMessages),
+	item('Restart', trayActions.restart),
+	item('Exit', trayActions.exit))).run()
+
 while(True):
 	try:
-		asdasdsad()
 		bap = server.recvfrom(bufferSize)
-		message = str(cipher.decrypt(bap[0]))
+		if(decryptMessages):
+			message = str(cipher.decrypt(bap[0]))
+		else:
+			message = str.decode(bap[0])
 		message = message[:-1][2:]
 		address = bap[1]
 		print("Received packet from "+str(address[0])+" with size of "+str(address[1])+" bytes.", CT.INFO)
