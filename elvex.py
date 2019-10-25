@@ -19,6 +19,7 @@ import inspect
 from OpenSSL import crypto, SSL
 from socket import gethostname
 import psutil
+import prompt_toolkit
 from time import gmtime, mktime
 try:
     import readline
@@ -769,24 +770,7 @@ if not (os.path.isfile("additional.db")):
 	conn.close()
 	Logger("Created new additionals database, because additional.db was missing.", CT.INFO)
 
-def completer(text,state):
-	global NotList
-	CMD = []
-	for name, val in elvex.__dict__.items():
-		if callable(val) and name not in NotList:
-			try:
-				args = inspect.getfullargspec(val)[0]
-			except Exception:
-				continue
-			args = ', '.join(args)
-			if(name.startswith("nolist_")):
-				continue
-			CMD.append(name)
-	options = [cmd for cmd in CMD if cmd.startswith(text)]
-	if state < len(options):
-		return options[state]
-	else:
-		return None
+
 
 if(platform.system() == "Windows"):
 	subprocess.check_call(["attrib","+H","users.db"])
@@ -888,17 +872,37 @@ elif(dInfo > db_AdditionalsVer):
 	print("Your version of additional.db is newer than this ELVEX SOCIAL version requires. Something may be broken.", CT.WARN)
 conn.close()
 
+def CompleterLoad():
+	global history
+	for name, val in elvex.__dict__.items():
+		if callable(val) and name not in NotList:
+			try:
+				args = inspect.getfullargspec(val)[0]
+			except Exception:
+				continue
+			if(name.startswith("nolist_")):
+				continue
+			history.append_string(name+"()")
+
+def is_valid_command(v):
+	return re.match(r"\b[^()]+\((.*)\)$", v) is not None
+
 if(len(sys.argv) > 1 and sys.argv[1] == "debugger"):
 	Logger("Debugger initialized.", CT.WARN)
 	import curses
 	isFormattedError = True
 	isDebugger = True
-	readline.parse_and_bind("tab: complete")
-	readline.set_completer(completer)
+	history = prompt_toolkit.history.InMemoryHistory()
+	CompleterLoad()
+	session = prompt_toolkit.PromptSession(
+        history=history,
+        auto_suggest=prompt_toolkit.auto_suggest.AutoSuggestFromHistory(),
+        enable_history_search=True)
+	validator = prompt_toolkit.validation.Validator.from_callable(is_valid_command, error_message='Not a valid function. (Cannot be executed)', move_cursor_to_end=True)
 	while(True):
 		oprint(Fore.CYAN+ '> '+Fore.RESET,end='')
 		if(isFormattedError):
-			a = input()
+			a = session.prompt('  ', validator=validator, validate_while_typing=True)
 			try:
 				eval(a)
 			except Exception as e:

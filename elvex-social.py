@@ -22,6 +22,8 @@ from pystray import Icon as icon, Menu as menu, MenuItem as item
 import requests
 from io import BytesIO
 import psutil
+import tkinter as tk
+from tkinter import simpledialog
 oprint("")
 
 Logger("Python importing complete.", CT.INFO)
@@ -124,6 +126,10 @@ class trayActions:
 		os.execl(python, python, *sys.argv)
 	def exit():
 		os._exit(1)
+	def Exec():
+		USER_INP = simpledialog.askstring(title="Elvex",
+                                  prompt="Enter function:")
+		eval(USER_INP)
 	def checkDBs():
 		conn = sqlite3.connect('users.db')
 		c = conn.cursor()
@@ -157,9 +163,11 @@ class trayActions:
 			print("Additional.db is up to date!")
 		conn.close()
 		print("DBs checking was finished!")
+
 icon('elvex', Image.open(BytesIO(requests.get("https://avatars3.githubusercontent.com/u/56801454?s=400&u=0ca69763a92ebb07e3bcf1264d17eaed40682467&v=4").content)), menu=menu(
 	item('-- Elvex SOCIAL v'+str(version),trayActions.none, enabled=False),
 	item('Check DBs for corruption', trayActions.checkDBs),
+	item('Run command', trayActions.Exec),
 	item('Decrypt messages', trayActions.switchDecryption, checked=lambda item: decryptMessages),
 	item('Restart', trayActions.restart),
 	item('Exit', trayActions.exit))).run()
