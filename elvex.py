@@ -37,8 +37,7 @@ oprint = print
 
 
 def Void():
-	umm = "umm"
-	del umm
+	return
 try:
 	ohelp = help
 except Exception:
