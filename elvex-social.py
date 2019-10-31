@@ -166,14 +166,28 @@ class trayActions:
 
 icon('elvex', Image.open(BytesIO(requests.get("https://avatars3.githubusercontent.com/u/56801454?s=400&u=0ca69763a92ebb07e3bcf1264d17eaed40682467&v=4").content)), menu=menu(
 	item('-- Elvex SOCIAL v'+str(version),trayActions.none, enabled=False),
-	item('Check DBs for corruption', trayActions.checkDBs),
 	item('Run command', trayActions.Exec),
 	item('Decrypt messages', trayActions.switchDecryption, checked=lambda item: decryptMessages),
 	item('Restart', trayActions.restart),
 	item('Exit', trayActions.exit))).run()
 
+loggedMethods = []
+
+def isMethod(method):
+	global jsonMessage
+	global loggedMethods
+	if(method not in loggedMethods):
+		print("- "+method)
+		loggedMethods.append(method)
+	return jsonMessage['act'] == method
+
+isFirstBootup = True
+
 while(True):
 	try:
+		if(isFirstBootup):
+			#First bootup settings
+			isFirstBootup=False
 		bap = server.recvfrom(bufferSize)
 		if(decryptMessages):
 			message = str(cipher.decrypt(bap[0]))
@@ -201,7 +215,7 @@ while(True):
 			Response = EncodedString(json.dumps({'error': 'NO_METHOD'}))
 			server.sendto(Response, address)
 			continue
-		if(jsonMessage['act'] == "account.Create"):
+		if(isMethod("account.Create")):
 			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args']):
 				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
 			else:
@@ -210,7 +224,7 @@ while(True):
 					Response = EncodedString(json.dumps({"error": r}))
 				else:
 					Response = EncodedString(json.dumps({'response':'OK'}))
-		elif(jsonMessage['act'] == 'account.checkPass'):
+		elif(isMethod("account.checkPass")):
 			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args']):
 				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
 			else:
@@ -223,7 +237,7 @@ while(True):
 						Response = EncodedString(json.dumps({'error':'BAD_PASSWORD'}))
 					else:
 						Response = EncodedString(json.dumps({'response':'OK'}))
-		elif(jsonMessage['act'] == 'account.get'):
+		elif(isMethod("account.get")):
 			if('login' not in jsonMessage['args']):
 				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
 			else:
@@ -233,7 +247,7 @@ while(True):
 				else:
 					r = r
 					Response = EncodedString(json.dumps({'response': 'OK', '{}'.format(jsonMessage['args']['login']): {'login': r[0], 'avatar': r[1], 'electricity': r[2], 'pp': r[3], 'inventory': json.loads(r[4]), 'customization': json.loads(r[5]), 'bio': r[6], 'stats': json.loads(r[7]), 'banned': bool(r[8])}}))
-		elif(jsonMessage['act'] == 'inventory.setCustomization'):
+		elif(isMethod("inventory.setCustomization")):
 			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args'] or 'slot' not in jsonMessage['args'] or 'item' not in jsonMessage['args']):
 				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
 			else:
@@ -248,7 +262,7 @@ while(True):
 					else:
 						SetCustomizationUser(r[0], jsonMessage['args']['slot'], jsonMessage['args']['item'])
 						Response = EncodedString(json.dumps({'response':'OK'}))
-		elif jsonMessage['act'] == "account.getBanReason":
+		elif isMethod("account.getBanReason"):
 			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args']):
 				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
 			else:
@@ -265,11 +279,11 @@ while(True):
 						Response = EncodedString(json.dumps({'response':'OK', 'ban_reason': r}))
 					else:
 						Response = EncodedString(json.dumps({'error':'UNKNOWN_TYPE'}))
-		elif(jsonMessage['act'] == "market.get"):
+		elif(isMethod("market.get")):
 			Response = EncodedString(json.dumps({'response': 'OK', 'items': GetStoreItems()}))
-		elif jsonMessage['act'] == "market.getTimer":
+		elif isMethod("market.getTimer"):
 			Response = EncodedString(json.dumps({'response': 'OK', 'seconds_left': GetStoreTimer()}))
-		elif(jsonMessage['act'] == "market.buy"):
+		elif(isMethod("market.buyItem")):
 			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args'] or 'slot' not in jsonMessage['args']):
 				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
 			else:

@@ -725,7 +725,9 @@ def dbgCreateUser():
 	else:
 		print("User "+Fore.CYAN+storeData.username.value+Fore.RESET+" was created successfully!", CT.INFO)
 
+
 def CalculatePPv2(dmgDealt, dmgTaken, supportPoints):
+	"""Perfomance Points calculator"""
 	if(supportPoints == 0): bonus = -5
 	elif(supportPoints > 0):
 		bonus = math.fabs(round(math.atan2(supportPoints, -supportPoints)))+math.tan(supportPoints*11.3777)+(supportPoints/0.5*0.25)
