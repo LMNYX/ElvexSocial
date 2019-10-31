@@ -7,3 +7,4 @@ npyscreen
 psutil
 requests
 pystray
+prompt_toolkit
