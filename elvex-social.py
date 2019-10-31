@@ -196,13 +196,8 @@ class ResponseManager(object):
 
 rm = ResponseManager()
 
-isFirstBootup = True
-
 while(True):
 	try:
-		if(isFirstBootup):
-			#First bootup settings
-			isFirstBootup=False
 		bap = server.recvfrom(bufferSize)
 		if(decryptMessages):
 			message = str(cipher.decrypt(bap[0]))
@@ -210,7 +205,7 @@ while(True):
 			message = str.decode(bap[0])
 		message = message[:-1][2:]
 		address = bap[1]
-		print("Received packet from "+str(address[0])+" with size of "+str(address[1])+" bytes.", CT.INFO)
+		#print("Received packet from "+str(address[0])+" with size of "+str(address[1])+" bytes.", CT.INFO)
 		try:
 			fff = int(message)
 			del fff
