@@ -383,7 +383,7 @@ def GetUser(username, safe = True):
 		a = c.execute("SELECT username, electricity,avatar, ppcount, inventory, customization, bio, stats, banned FROM users WHERE username = '{}'".format(username))
 		a = a.fetchone()
 	else:
-		a = c.execute("SELECT username, passhash,avatar, electricity,ppcount, inventory, customization, bio, stats, banned, regip FROM users WHERE username = '{}'".format(username))
+		a = c.execute("SELECT username, passhash, electricity,avatar,ppcount, inventory, customization, bio, stats, banned, regip FROM users WHERE username = '{}'".format(username))
 		a = a.fetchone()
 	return a
 

@@ -319,15 +319,16 @@ while(True):
 				try:
 					tttt = int(jsonMessage['args']['slot'])
 					del tttt
-					r = GetUser(jsonMessage['args']['login'])
+					r = GetUser(jsonMessage['args']['login'],False)
 					if(r == "USER_GONE" or r == "USER_SPACE"):
 						rm.SetError(r)
 					else:
+
 						r = GetStoreItem(int(jsonMessage['args']['slot']))
 						if(type(r) == str):
 							rm.SetError("NO_INDEX")
 						else:
-							if(GetUserBalance(jsonMessage['args']['login']) < r[1]):
+							if(GetUserBalance(jsonMessage['args']['login']) < r[2]):
 								rm.SetError("NO_CASH")
 							else:
 								EditUser(jsonMessage['args']['login'], "electricity", GetUserBalance(jsonMessage['args']['login'])-r[1])
