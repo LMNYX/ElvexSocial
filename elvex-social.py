@@ -205,7 +205,7 @@ while(True):
 			message = str.decode(bap[0])
 		message = message[:-1][2:]
 		address = bap[1]
-		#print("Received packet from "+str(address[0])+" with size of "+str(address[1])+" bytes.", CT.INFO)
+		Logger("Received packet from "+str(address[0])+" with size of "+str(address[1])+" bytes.", CT.INFO)
 		try:
 			fff = int(message)
 			del fff
