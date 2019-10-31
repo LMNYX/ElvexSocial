@@ -188,7 +188,7 @@ class ResponseManager(object):
 		global Response
 		Response = EncodedString(json.dumps({'error': error_code}))
 		return True
-	def SetOkResponse(response_data):
+	def SetOkResponse(response_data = {}):
 		response_data['response'] = "OK"
 		global Response
 		Response = EncodedString(json.dumps(response_data))
@@ -253,24 +253,24 @@ while(True):
 			if (isntArguments('login', 'pswd')):
 				rm.SetError("NO_ARGS")
 			else:
-				r = AddUser(GetArgument('login'), GetArgument('pswd'),regip=str(address[0]))
+				r = AddUser(rm.GetArgument('login'), rm.GetArgument('pswd'),regip=str(address[0]))
 				if(r != "OK"):
 					rm.SetError(r)
 				else:
-					Response = EncodedString(json.dumps({'response':'OK'}))
+					rm.SetOkResponse()
 		elif(isMethod("account.checkPass")):
 			if(isntArguments('login', 'pswd')):
 				rm.SetError("NO_ARGS")
 			else:
-				r = GetUser(GetArgument('login'), False)
+				r = GetUser(rm.GetArgument('login'), False)
 				if(r == "USER_GONE" or r == "USER_SPACE"):
 					rm.SetError(r)
 				else:
 					r = json.loads(r)
-					if(EStr(GetArgument('pswd')) != r[1]):
+					if(EStr(rm.GetArgument('pswd')) != r[1]):
 						rm.SetError("BAD_PASSWORD")
 					else:
-						Response = EncodedString(json.dumps({'response':'OK'}))
+						rm.SetOkResponse()
 		elif(isMethod("account.get")):
 			if(isntArgument('login')):
 				rm.SetError("NO_ARGS")
@@ -280,7 +280,7 @@ while(True):
 					rm.SetError(r)
 				else:
 					r = r
-					Response = EncodedString(json.dumps({'response': 'OK', '{}'.format(jsonMessage['args']['login']): {'login': r[0], 'avatar': r[1], 'electricity': r[2], 'pp': r[3], 'inventory': json.loads(r[4]), 'customization': json.loads(r[5]), 'bio': r[6], 'stats': json.loads(r[7]), 'banned': bool(r[8])}}))
+					rm.SetOkResponse('{}'.format(rm.GetArgument()): {'login': r[0], 'avatar': r[1], 'electricity': r[2], 'pp': r[3], 'inventory': json.loads(r[4]), 'customization': json.loads(r[5]), 'bio': r[6], 'stats': json.loads(r[7], 'banned': bool(r[8]))})
 		elif(isMethod("inventory.setCustomization")):
 			if(isntArguments('login', 'pswd', 'slot', 'item')):
 				rm.SetError("NO_ARGS")
@@ -294,42 +294,42 @@ while(True):
 					if(jsonMessage['args']['item'] not in inv):
 						rm.SetError("NO_ITEM")
 					else:
-						SetCustomizationUser(r[0], GetArgument('slot'), GetArgument('item'))
-						Response = EncodedString(json.dumps({'response':'OK'}))
+						SetCustomizationUser(r[0], rm.GetArgument('slot'), rm.GetArgument('item'))
+						rm.SetOkResponse()
 		elif isMethod("account.getBanReason"):
 			if(isntArguments('login', 'pswd')):
 				rm.SetError("NO_ARGS")
 			else:
-				r = GetUser(GetArgument('login'), False)
+				r = GetUser(rm.GetArgument('login'), False)
 				if(type(r) == str):
 					rm.SetError(r)
-				elif(EStr(GetArgument('pswd')) != r[1]):
+				elif(EStr(rm.GetArgument('pswd')) != r[1]):
 					rm.SetError("WRONG_PASS")
 				else:
-					r = GetBanReason(GetArgument('login'))
+					r = GetBanReason(rm.GetArgument('login'))
 					if(type(r) == str):
 						rm.SetError(r)
 					elif(type(r) == int):
-						Response = EncodedString(json.dumps({'response':'OK', 'ban_reason': r}))
+						rm.SetOkResponse({'ban_reason': r})
 					else:
 						rm.SetError("UNKNOWN")
 		elif(isMethod("market.get")):
-			Response = EncodedString(json.dumps({'response': 'OK', 'items': GetStoreItems()}))
+			rm.SetOkResponse({'items': GetStoreItems()})
 		elif isMethod("market.getTimer"):
-			Response = EncodedString(json.dumps({'response': 'OK', 'seconds_left': GetStoreTimer()}))
+			rm.SetOkResponse({'seconds_left': GetStoreTimer()})
 		elif(isMethod("market.buyItem")):
 			if(isntArguments('login', 'pswd','slot')):
 				rm.SetError("NO_ARGS")
 			else:
 				StoreItems = GetStoreItems()
 				try:
-					tttt = int(GetArgument('slot'))
+					tttt = int(rm.GetArgument('slot'))
 					del tttt
 					r = GetUser(jGetArgument('login'),False)
 					if(r == "USER_GONE" or r == "USER_SPACE"):
 						rm.SetError(r)
 					else:
-						if(EStr(GetArgument("pswd")) != r[1]):
+						if(EStr(rm.GetArgument("pswd")) != r[1]):
 							rm.SetError("WRONG_PASS")
 							server.sendto(Response, address)
 							continue
@@ -337,12 +337,12 @@ while(True):
 						if(type(r) == str):
 							rm.SetError("NO_INDEX")
 						else:
-							if(GetUserBalance(GetArgument('login')) < r[2]):
+							if(GetUserBalance(rm.GetArgument('login')) < r[2]):
 								rm.SetError("NO_CASH")
 							else:
-								EditUser(GetArgument('login'), "electricity", GetUserBalance(GetArgument('login'))-r[1])
-								AddInvUser(GetArgument('login'), r[0])
-								Response = EncodedString(json.dumps({'response':'OK'}))
+								EditUser(rm.GetArgument('login'), "electricity", GetUserBalance(rm.GetArgument('login'))-r[1])
+								AddInvUser(rm.GetArgument('login'), r[0])
+								rm.SetOkResponse()
 				except Exception:
 					rm.SetError("INVALID_ARG")
 		else:
