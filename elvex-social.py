@@ -275,7 +275,7 @@ while(True):
 			if(isntArgument('login')):
 				rm.SetError("NO_ARGS")
 			else:
-				r = GetUser(jsonMessage['args']['login'])
+				r = GetUser(GetArgument('login'))
 				if(r == "USER_GONE" or r == "USER_SPACE"):
 					rm.SetError(r)
 				else:
@@ -285,13 +285,13 @@ while(True):
 			if(isntArguments('login', 'pswd', 'slot', 'item')):
 				rm.SetError("NO_ARGS")
 			else:
-				r = GetUser(jsonMessage['args']['login'])
+				r = GetUser(GetArgument("login"))
 				if(r == "USER_GONE" or r == "USER_SPACE"):
 					rm.SetError(r)
 				else:
 					r = json.loads(r)
 					inv = r[4]
-					if(jsonMessage['args']['item'] not in inv):
+					if(GetArgument('item') not in inv):
 						rm.SetError("NO_ITEM")
 					else:
 						SetCustomizationUser(r[0], rm.GetArgument('slot'), rm.GetArgument('item'))
@@ -333,7 +333,7 @@ while(True):
 							rm.SetError("WRONG_PASS")
 							server.sendto(Response, address)
 							continue
-						r = GetStoreItem(int(jsonMessage['args']['slot']))
+						r = GetStoreItem(int(GetArgument('slot')))
 						if(type(r) == str):
 							rm.SetError("NO_INDEX")
 						else:
