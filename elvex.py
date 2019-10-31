@@ -728,10 +728,10 @@ def dbgCreateUser():
 def CalculatePPv2(dmgDealt, dmgTaken, supportPoints):
 	if(supportPoints == 0): bonus = -5
 	elif(supportPoints > 0):
-		bonus = (math.factorial(supportPoints)/10.520004+math.log10(supportPoints))+math.cos(supportPoints)-math.atan2(-(supportPoints), supportPoints)+(math.radians(supportPoints)**1.2)+math.hypot(supportPoints, supportPoints*1.567622)
+		bonus = math.fabs(round(math.atan2(supportPoints, -supportPoints)))+math.tan(supportPoints*11.3777)+(supportPoints/0.5*0.25)
 	else:
 		supportPoints = math.fabs(supportPoints)
-		bonus = (math.factorial(supportPoints)/10.520004+math.log10(supportPoints))+math.cos(supportPoints)-math.atan2(-(supportPoints), supportPoints)+(math.radians(supportPoints)**1.2)+math.hypot(supportPoints, supportPoints*1.567622)
+		bonus = math.fabs(round(math.atan2(supportPoints, -supportPoints)))+math.tan(supportPoints*11.3777)+(supportPoints/0.5*0.25)+supportPoints * 2.5
 		bonus = -(bonus)
 	return -3 + (dmgDealt ** 1.25 - dmgTaken ** 1.2589)/10.5+bonus
 
