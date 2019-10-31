@@ -193,6 +193,24 @@ class ResponseManager(object):
 		global Response
 		Response = EncodedString(json.dumps(response_data))
 		return True
+	def isArgument(arg):
+		global jsonMessage
+		return arg in jsonMessage['args']
+	def isntArgument(arg):
+		global jsonMessage
+		return arg not in jsonMessage['args']
+	def isArguments(*args):
+		global jsonMessage
+		for arg in args:
+			if(arg not in jsonMessage['args']):
+				return False
+		return True
+	def isntArguments(*args):
+		global jsonMessage
+		for arg in args:
+			if(arg in jsonMessage['args']):
+				return False
+		return True
 
 rm = ResponseManager()
 
@@ -226,7 +244,7 @@ while(True):
 			server.sendto(Response, address)
 			continue
 		if(isMethod("account.Create")):
-			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args']):
+			if (isntArguments('login', 'pswd')):
 				rm.SetError("NO_ARGS")
 			else:
 				r = AddUser(jsonMessage['args']['login'], jsonMessage['args']['pswd'],regip=str(address[0]))
@@ -235,7 +253,7 @@ while(True):
 				else:
 					Response = EncodedString(json.dumps({'response':'OK'}))
 		elif(isMethod("account.checkPass")):
-			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args']):
+			if(isntArguments('login', 'pswd')):
 				rm.SetError("NO_ARGS")
 			else:
 				r = GetUser(jsonMessage['args']['login'], False)
@@ -248,7 +266,7 @@ while(True):
 					else:
 						Response = EncodedString(json.dumps({'response':'OK'}))
 		elif(isMethod("account.get")):
-			if('login' not in jsonMessage['args']):
+			if(isntArgument('login')):
 				rm.SetError("NO_ARGS")
 			else:
 				r = GetUser(jsonMessage['args']['login'])
@@ -258,7 +276,7 @@ while(True):
 					r = r
 					Response = EncodedString(json.dumps({'response': 'OK', '{}'.format(jsonMessage['args']['login']): {'login': r[0], 'avatar': r[1], 'electricity': r[2], 'pp': r[3], 'inventory': json.loads(r[4]), 'customization': json.loads(r[5]), 'bio': r[6], 'stats': json.loads(r[7]), 'banned': bool(r[8])}}))
 		elif(isMethod("inventory.setCustomization")):
-			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args'] or 'slot' not in jsonMessage['args'] or 'item' not in jsonMessage['args']):
+			if(isntArguments('login', 'pswd', 'slot', 'item')):
 				rm.SetError("NO_ARGS")
 			else:
 				r = GetUser(jsonMessage['args']['login'])
@@ -273,7 +291,7 @@ while(True):
 						SetCustomizationUser(r[0], jsonMessage['args']['slot'], jsonMessage['args']['item'])
 						Response = EncodedString(json.dumps({'response':'OK'}))
 		elif isMethod("account.getBanReason"):
-			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args']):
+			if(isntArguments('login', 'pswd')):
 				rm.SetError("NO_ARGS")
 			else:
 				r = GetUser(jsonMessage['args']['login'], False)
@@ -294,7 +312,7 @@ while(True):
 		elif isMethod("market.getTimer"):
 			Response = EncodedString(json.dumps({'response': 'OK', 'seconds_left': GetStoreTimer()}))
 		elif(isMethod("market.buyItem")):
-			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args'] or 'slot' not in jsonMessage['args']):
+			if(isntArguments('login', 'pswd','slot')):
 				rm.SetError("NO_ARGS")
 			else:
 				StoreItems = GetStoreItems()
