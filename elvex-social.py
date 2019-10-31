@@ -181,6 +181,21 @@ def isMethod(method):
 		loggedMethods.append(method)
 	return jsonMessage['act'] == method
 
+class ResponseManager(object):
+	def __init__(self):
+		self.Responses = []
+	def SetError(error_code):
+		global Response
+		Response = EncodedString(json.dumps({'error': error_code}))
+		return True
+	def SetOkResponse(response_data):
+		response_data['response'] = "OK"
+		global Response
+		Response = EncodedString(json.dumps(response_data))
+		return True
+
+rm = ResponseManager()
+
 isFirstBootup = True
 
 while(True):
@@ -200,92 +215,92 @@ while(True):
 			fff = int(message)
 			del fff
 			Logger("It's int!", CT.WARN)
-			Response = EncodedString(json.dumps({'error': 'NOT_JSON'}))
+			rm.SetError("NOT_JSON")
 			server.sendto(Response, address)
 			continue
 		except Exception:
 			Logger("Woah! Everything is ok!")
 		if not (is_json(message)):
-			Response = EncodedString(json.dumps({'error': 'NOT_JSON'}))
+			rm.SetError("NOT_JSON")
 			server.sendto(Response, address)
 			continue
 		else:
 			jsonMessage = json.loads(message)
 		if('act' not in jsonMessage or 'args' not in jsonMessage):
-			Response = EncodedString(json.dumps({'error': 'NO_METHOD'}))
+			rm.SetError("NO_METHOD")
 			server.sendto(Response, address)
 			continue
 		if(isMethod("account.Create")):
 			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args']):
-				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
+				rm.SetError("NO_ARGS")
 			else:
 				r = AddUser(jsonMessage['args']['login'], jsonMessage['args']['pswd'],regip=str(address[0]))
 				if(r != "OK"):
-					Response = EncodedString(json.dumps({"error": r}))
+					rm.SetError(r)
 				else:
 					Response = EncodedString(json.dumps({'response':'OK'}))
 		elif(isMethod("account.checkPass")):
 			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args']):
-				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
+				rm.SetError("NO_ARGS")
 			else:
 				r = GetUser(jsonMessage['args']['login'], False)
 				if(r == "USER_GONE" or r == "USER_SPACE"):
-					Response = EncodedString(json.dumps({'error': r}))
+					rm.SetError(r)
 				else:
 					r = json.loads(r)
 					if(EStr(jsonMessage['args']['pswd']) != r[1]):
-						Response = EncodedString(json.dumps({'error':'BAD_PASSWORD'}))
+						rm.SetError("BAD_PASSWORD")
 					else:
 						Response = EncodedString(json.dumps({'response':'OK'}))
 		elif(isMethod("account.get")):
 			if('login' not in jsonMessage['args']):
-				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
+				rm.SetError("NO_ARGS")
 			else:
 				r = GetUser(jsonMessage['args']['login'])
 				if(r == "USER_GONE" or r == "USER_SPACE"):
-					Response = EncodedString(json.dumps({'error': r}))
+					rm.SetError(r)
 				else:
 					r = r
 					Response = EncodedString(json.dumps({'response': 'OK', '{}'.format(jsonMessage['args']['login']): {'login': r[0], 'avatar': r[1], 'electricity': r[2], 'pp': r[3], 'inventory': json.loads(r[4]), 'customization': json.loads(r[5]), 'bio': r[6], 'stats': json.loads(r[7]), 'banned': bool(r[8])}}))
 		elif(isMethod("inventory.setCustomization")):
 			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args'] or 'slot' not in jsonMessage['args'] or 'item' not in jsonMessage['args']):
-				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
+				rm.SetError("NO_ARGS")
 			else:
 				r = GetUser(jsonMessage['args']['login'])
 				if(r == "USER_GONE" or r == "USER_SPACE"):
-					Response = EncodedString(json.dumps({'error': r}))
+					rm.SetError(r)
 				else:
 					r = json.loads(r)
 					inv = r[4]
 					if(jsonMessage['args']['item'] not in inv):
-						Response = EncodedString(json.dumps({'error':'NO_ITEM'}))
+						rm.SetError("NO_ITEM")
 					else:
 						SetCustomizationUser(r[0], jsonMessage['args']['slot'], jsonMessage['args']['item'])
 						Response = EncodedString(json.dumps({'response':'OK'}))
 		elif isMethod("account.getBanReason"):
 			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args']):
-				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
+				rm.SetError("NO_ARGS")
 			else:
 				r = GetUser(jsonMessage['args']['login'], False)
 				if(type(r) == str):
-					Response = EncodedString(json.dumps({'error':r}))
+					rm.SetError(r)
 				elif(EStr(jsonMessage['args']['pswd']) != r[1]):
-					Response = EncodedString(json.dumps({'error':'WRONG_PASS'}))
+					rm.SetError("WRONG_PASS")
 				else:
 					r = GetBanReason(jsonMessage['args']['login'])
 					if(type(r) == str):
-						Response = EncodedString(json.dumps({'error':r}))
+						rm.SetError(r)
 					elif(type(r) == int):
 						Response = EncodedString(json.dumps({'response':'OK', 'ban_reason': r}))
 					else:
-						Response = EncodedString(json.dumps({'error':'UNKNOWN_TYPE'}))
+						rm.SetError("UNKNOWN")
 		elif(isMethod("market.get")):
 			Response = EncodedString(json.dumps({'response': 'OK', 'items': GetStoreItems()}))
 		elif isMethod("market.getTimer"):
 			Response = EncodedString(json.dumps({'response': 'OK', 'seconds_left': GetStoreTimer()}))
 		elif(isMethod("market.buyItem")):
 			if('login' not in jsonMessage['args'] or 'pswd' not in jsonMessage['args'] or 'slot' not in jsonMessage['args']):
-				Response = EncodedString(json.dumps({'error':'NO_ARGS'}))
+				rm.SetError("NO_ARGS")
 			else:
 				StoreItems = GetStoreItems()
 				try:
@@ -293,22 +308,22 @@ while(True):
 					del tttt
 					r = GetUser(jsonMessage['args']['login'])
 					if(r == "USER_GONE" or r == "USER_SPACE"):
-						Response = EncodedString(json.dumps({'error': r}))
+						rm.SetError(r)
 					else:
 						r = GetStoreItem(int(jsonMessage['args']['slot']))
 						if(type(r) == str):
-							Response = EncodedString(json.dumps({'error': 'NO_INDEX_ITEM'}))
+							rm.SetError("NO_INDEX")
 						else:
 							if(GetUserBalance(jsonMessage['args']['login']) < r[1]):
-								Response = EncodedString(json.dumps({'error': 'NOT_ENOUGH_CASH'}))
+								rm.SetError("NO_CASH")
 							else:
 								EditUser(jsonMessage['args']['login'], "electricity", GetUserBalance(jsonMessage['args']['login'])-r[1])
 								AddInvUser(jsonMessage['args']['login'], r[0])
 								Response = EncodedString(json.dumps({'response':'OK'}))
 				except Exception:
-					Response = EncodedString(json.dumps({'error':'INVALID_ARG'}))
+					rm.SetError("INVALID_ARG")
 		else:
-			Response = EncodedString(json.dumps({'error': 'BAD_REQUEST'}))
+			rm.SetError("BAD_REQUEST")
 		server.sendto(Response, address)
 	except Exception as e:
 		print("Uh oh! Error approaches! ("+str(e)+")", CT.ERROR)
