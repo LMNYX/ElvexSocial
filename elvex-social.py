@@ -253,7 +253,7 @@ while(True):
 			if (isntArguments('login', 'pswd')):
 				rm.SetError("NO_ARGS")
 			else:
-				r = AddUser(jsonMessage['args']['login'], jsonMessage['args']['pswd'],regip=str(address[0]))
+				r = AddUser(GetArgument('login'), GetArgument('pswd'),regip=str(address[0]))
 				if(r != "OK"):
 					rm.SetError(r)
 				else:
@@ -262,12 +262,12 @@ while(True):
 			if(isntArguments('login', 'pswd')):
 				rm.SetError("NO_ARGS")
 			else:
-				r = GetUser(jsonMessage['args']['login'], False)
+				r = GetUser(GetArgument('login'), False)
 				if(r == "USER_GONE" or r == "USER_SPACE"):
 					rm.SetError(r)
 				else:
 					r = json.loads(r)
-					if(EStr(jsonMessage['args']['pswd']) != r[1]):
+					if(EStr(GetArgument('pswd')) != r[1]):
 						rm.SetError("BAD_PASSWORD")
 					else:
 						Response = EncodedString(json.dumps({'response':'OK'}))
@@ -294,19 +294,19 @@ while(True):
 					if(jsonMessage['args']['item'] not in inv):
 						rm.SetError("NO_ITEM")
 					else:
-						SetCustomizationUser(r[0], jsonMessage['args']['slot'], jsonMessage['args']['item'])
+						SetCustomizationUser(r[0], GetArgument('slot'), GetArgument('item'))
 						Response = EncodedString(json.dumps({'response':'OK'}))
 		elif isMethod("account.getBanReason"):
 			if(isntArguments('login', 'pswd')):
 				rm.SetError("NO_ARGS")
 			else:
-				r = GetUser(jsonMessage['args']['login'], False)
+				r = GetUser(GetArgument('login'), False)
 				if(type(r) == str):
 					rm.SetError(r)
-				elif(EStr(jsonMessage['args']['pswd']) != r[1]):
+				elif(EStr(GetArgument('pswd')) != r[1]):
 					rm.SetError("WRONG_PASS")
 				else:
-					r = GetBanReason(jsonMessage['args']['login'])
+					r = GetBanReason(GetArgument('login'))
 					if(type(r) == str):
 						rm.SetError(r)
 					elif(type(r) == int):
@@ -323,9 +323,9 @@ while(True):
 			else:
 				StoreItems = GetStoreItems()
 				try:
-					tttt = int(jsonMessage['args']['slot'])
+					tttt = int(GetArgument('slot'))
 					del tttt
-					r = GetUser(jsonMessage['args']['login'],False)
+					r = GetUser(jGetArgument('login'),False)
 					if(r == "USER_GONE" or r == "USER_SPACE"):
 						rm.SetError(r)
 					else:
@@ -337,11 +337,11 @@ while(True):
 						if(type(r) == str):
 							rm.SetError("NO_INDEX")
 						else:
-							if(GetUserBalance(jsonMessage['args']['login']) < r[2]):
+							if(GetUserBalance(GetArgument('login')) < r[2]):
 								rm.SetError("NO_CASH")
 							else:
-								EditUser(jsonMessage['args']['login'], "electricity", GetUserBalance(jsonMessage['args']['login'])-r[1])
-								AddInvUser(jsonMessage['args']['login'], r[0])
+								EditUser(GetArgument('login'), "electricity", GetUserBalance(GetArgument('login'))-r[1])
+								AddInvUser(GetArgument('login'), r[0])
 								Response = EncodedString(json.dumps({'response':'OK'}))
 				except Exception:
 					rm.SetError("INVALID_ARG")
