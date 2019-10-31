@@ -211,6 +211,12 @@ class ResponseManager(object):
 			if(arg in jsonMessage['args']):
 				return False
 		return True
+	def GetArgument(arg):
+		global jsonMessage
+		if(isArgument(arg)):
+			return jsonMessage[arg]
+		else:
+			return ""
 
 rm = ResponseManager()
 
@@ -323,7 +329,10 @@ while(True):
 					if(r == "USER_GONE" or r == "USER_SPACE"):
 						rm.SetError(r)
 					else:
-
+						if(EStr(GetArgument("pswd")) != r[1]):
+							rm.SetError("WRONG_PASS")
+							server.sendto(Response, address)
+							continue
 						r = GetStoreItem(int(jsonMessage['args']['slot']))
 						if(type(r) == str):
 							rm.SetError("NO_INDEX")
