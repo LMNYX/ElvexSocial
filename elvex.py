@@ -32,8 +32,6 @@ Logger("Python importing complete.", CT.INFO)
 init(autoreset=True)
 Logger("Colorama initialized.", CT.INFO)
 
-if(appargs.gui):
-	print("GUI Mode activated.")
 
 if not (os.path.isfile("private.pem")):
 	if not (os.path.isfile("public.pem")):

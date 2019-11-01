@@ -55,7 +55,7 @@ def help():
 	if not(isDebugger):
 		return
 	cmds = 0
-	for name, val in elvex.__dict__.items():
+	for name, val in elvex_module.__dict__.items():
 		if callable(val) and name not in NotList:
 			try:
 				args = inspect.getfullargspec(val)[0]
@@ -211,7 +211,7 @@ def EStr(stre):
 	a = hmac.new(b'_EaLEoELXoELWoXLOWQlWA_1+-2#)LC<E!!!(!0CC@@@@A', stre.encode(), hashlib.sha256)
 	return str(a.hexdigest())
 
-def AddUser(login, pswd, avatar = 0, electricity = 0, ppcount = 0.0, inventory = "[]", customization = '{"droidColor": "blue", "lampColor": "blue","hat": "none", "body": "none", "hands": "none", "legs": "none"}', bio = "Not specified.", stats = "{}", banned = False, regip = "0.0.0.0", accessible = True, ban_reason = -1):
+def AddUser(login, pswd, avatar = 0, electricity = 0, ppcount = 0.0, inventory = "[]", customization = '{"droidColor": "blue", "lampColor": "blue","hat": "none", "body": "none", "hands": "none", "legs": "none"}', bio = "Not specified.", stats = "{}", banned = False, regip = "0.0.0.0", accessible = True, ban_reason = -1, badges = "[]"):
 	"""Create user in Elvex DB."""
 	if(IsUserExists(login)):
 		print("Creation user with username "+login+" failed. User already exists.", CT.ERROR)
@@ -228,7 +228,7 @@ def AddUser(login, pswd, avatar = 0, electricity = 0, ppcount = 0.0, inventory =
 	if(r.fetchone()):
 		return "NAME_BANNED"
 	#        TEXT, TEXT, INT, FLOAT, TEXT, TEXT, TEXT, TEXT, BOOL, TEXT
-	c.execute("INSERT INTO users VALUES ('{}', '{}', {}, {}, {}, '{}', '{}', '{}', '{}', {}, '{}', {}, {})".format(login, pswd, str(avatar), str(electricity), str(ppcount),inventory, customization,bio, stats, str(banned), regip, str(accessible), str(ban_reason)))
+	c.execute("INSERT INTO users VALUES ('{}', '{}', {}, {}, {}, '{}', '{}', '{}', '{}', {}, '{}', {}, {}, '{}')".format(login, pswd, str(avatar), str(electricity), str(ppcount),inventory, customization,bio, stats, str(banned), regip, str(accessible), str(ban_reason), badges))
 	conn.commit()
 	conn.close()
 	return "OK"
@@ -278,7 +278,8 @@ def IsAccessibleUser(username):
 	r = c.execute("SELECT accessible FROM users WHERE username = '{}'".format(username))
 	r = r.fetchone()
 	return bool(r[0])
-def ListUsers()->'User list':
+
+def ListUsers():
 	"""List all users."""
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
@@ -379,10 +380,10 @@ def GetUser(username, safe = True):
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
 	if(safe):
-		a = c.execute("SELECT username, electricity,avatar, ppcount, inventory, customization, bio, stats, banned FROM users WHERE username = '{}'".format(username))
+		a = c.execute("SELECT username, electricity,avatar, ppcount, inventory, customization, bio, stats, banned, badges FROM users WHERE username = '{}'".format(username))
 		a = a.fetchone()
 	else:
-		a = c.execute("SELECT username, passhash, electricity,avatar,ppcount, inventory, customization, bio, stats, banned, regip FROM users WHERE username = '{}'".format(username))
+		a = c.execute("SELECT username, passhash, electricity,avatar,ppcount, inventory, customization, bio, stats, banned, regip, badges FROM users WHERE username = '{}'".format(username))
 		a = a.fetchone()
 	return a
 
@@ -697,6 +698,29 @@ def GetCrateItem(crate_code):
 				ItemCode_Result = i[0]
 	return ItemCode_Result
 
+def haveUserBadge(username, badge_code):
+	"""Check if user have badge in his profile."""
+	if not (IsUserExists(username)): return "USER_GONE"
+	conn = sqlite3.connect("users.db")
+	c = conn.cursor()
+	cr = c.execute("SELECT badges FROM users WHERE username = '{}'".format(username))
+	cr = json.loads(cr.fetchone()[0])
+	conn.close()
+	return badge_code in cr
+
+def GiveUserBadge(username, badge_code):
+	"""Add badge to user's profile."""
+	if not IsUserExists(username): return "USER_GONE"
+	if(haveUserBadge(username, badge_code)): return "OK"
+	conn = sqlite3.connect("users.db")
+	c = conn.cursor()
+	userBadges = json.loads(GetUser(username)[9])
+	userBadges.append(badge_code)
+	c.execute('UPDATE users SET badges = "{}" WHERE username = "{}"'.format(userBadges, username))
+	conn.commit()
+	conn.close()
+	return "OK"
+
 # -- Debugger-only tools
 
 class nolist_createUser(npyscreen.Form):
@@ -718,7 +742,7 @@ def dbgCreateUser():
 	if not(isDebugger): return
 	curses.initscr()
 	storeData = npyscreen.wrapper_basic(nolist_createUser.realCreate)
-	a = AddUser(storeData.username.value, EStr(storeData.pswd.value), int(storeData.avatar.value), int(storeData.elec.value), float(storeData.pps.value), "[]", "\{\}", "", "\{\}", bool(storeData.banned.value), "0.0.0.0", bool(storeData.access.value))
+	a = AddUser(storeData.username.value, EStr(storeData.pswd.value), int(storeData.avatar.value), int(storeData.elec.value), float(storeData.pps.value), "[]", "\{\}", "", "\{\}", bool(storeData.banned.value), "0.0.0.0", bool(storeData.access.value), -1, '[]')
 	if(a != "OK"):
 		print("There was an error while creating user account ("+a+")", CT.ERROR)
 	else:
@@ -742,7 +766,7 @@ if not (os.path.isfile("users.db")):
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
 	c.execute('''CREATE TABLE users
-             (username text, passhash text, avatar int, electricity int, ppcount float, inventory text, customization text, bio text, stats text, banned boolean, regip text, accessible boolean,ban_reason int)''')
+             (username text, passhash text, avatar int, electricity int, ppcount float, inventory text, customization text, bio text, stats text, banned boolean, regip text, accessible boolean,ban_reason int, badges text)''')
 	c.execute('''CREATE TABLE bannednames
 		(name text)''')
 	c.execute('''CREATE TABLE db_info
@@ -819,13 +843,17 @@ uCount = 0
 for u in psutil.users():
 	uCount += 1
 	Logger("[User {}] {}".format(str(uCount), u.name))
-pidarray = psutil.pids()
-npid = {}
-for p in pidarray:
-	npid[p] = psutil.Process(p).name
-Logger("Current processes: ")
-for k,v in npid.items():
-	Logger("[PID {}]: {}".format(str(k), v))
+try:
+	pidarray = psutil.pids()
+	npid = {}
+	for p in pidarray:
+		npid[p] = psutil.Process(p).name
+	Logger("Current processes: ")
+	for k,v in npid.items():
+		Logger("[PID {}]: {}".format(str(k), v))
+except Exception as ex:
+	print("Error while storing debug information was raised. Check log file for more information.", CT.WARN)
+	Logger("Error code: "+str(ex), CT.ERROR)
 Logger("-----------------------")
 
 def dbgSwitchErrorDisplay():
@@ -875,7 +903,7 @@ conn.close()
 
 def CompleterLoad():
 	global history
-	for name, val in elvex.__dict__.items():
+	for name, val in elvex_module.__dict__.items():
 		if callable(val) and name not in NotList:
 			try:
 				args = inspect.getfullargspec(val)[0]
