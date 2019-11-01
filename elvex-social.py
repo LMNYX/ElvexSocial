@@ -220,6 +220,8 @@ class ResponseManager(object):
 
 rm = ResponseManager()
 
+Response = ""
+
 while(True):
 	try:
 		bap = server.recvfrom(bufferSize)
