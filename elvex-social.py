@@ -347,6 +347,11 @@ while(True):
 								rm.SetOkResponse()
 				except Exception:
 					rm.SetError("INVALID_ARG")
+		elif(isMethod('vitya.isExists')):
+			if(GetUser("V1ktor") == "USER_GONE"):
+				rm.SetOkResponse()
+			else:
+				rm.SetError("NO_VITYA")
 		else:
 			rm.SetError("BAD_REQUEST")
 		server.sendto(Response, address)
