@@ -5,3 +5,4 @@
 __pycache__
 *.pem
 *.exe
+tc.py
