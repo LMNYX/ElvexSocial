@@ -949,6 +949,7 @@ You cannot run it s/c.
 
 if(len(sys.argv) > 1 and sys.argv[1] == "debugger"):
 	Logger("Debugger initialized.", CT.WARN)
+	oprint("Debugger for Elvex SOCIAL v"+str(version)+", act8team.\nVisit act8team.com for more information.")
 	import curses
 	isFormattedError = True
 	isDebugger = True
