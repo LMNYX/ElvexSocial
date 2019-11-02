@@ -14,6 +14,7 @@ import hashlib
 import base64
 import binascii
 import re
+import threading
 import elvex_module
 import inspect
 from OpenSSL import crypto, SSL
@@ -83,6 +84,16 @@ isDebugger = False
 true = True
 false = False
 
+def synchronized(func):
+	
+    func.__lock__ = threading.Lock()
+		
+    def synced_func(*args, **kws):
+        with func.__lock__:
+            return func(*args, **kws)
+
+    return synced_func
+
 def round50(n):
     return round(n * 2, -2)
 
@@ -99,6 +110,7 @@ try:
 	os.mkdir("log")
 except FileExistsError:
 	idc = "i dont care"
+	del idc
 
 if not(os.path.isfile("log/unix"+str(StartTime)+".log")):
 	with open("log/unix"+str(StartTime)+".log", "w") as w:
@@ -916,6 +928,25 @@ def CompleterLoad():
 def is_valid_command(v):
 	return re.match(r"\b[^()]+\((.*)\)$", v) is not None
 
+NotAScriptMessage = Fore.RESET + '''
+⣿⣿⣿⣿⣿⣿⣿⣿⠿⠛⠛⢛⣉⣩⣤⣬⣉⣉⣉⠛⠛⠿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⠿⠋⣀⣴⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣦⣈⠻⢿⣿⣿⣿⣿⣿
+⣿⣿⣿⠟⢁⣴⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣦⡙⠿⣿⣿⣿
+⣿⣿⠏⢠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠙⢻⣷⡆⠹⣿⣿
+⣿⡇⢠⣿⣿⣿⣿⣿⣿⡟⠋⠛⢻⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄⣀⣴⣿⣿⡄⢹⣿
+⡟⢀⣿⣿⣿⣿⣿⣿⣿⣧⣀⣤⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡄⢻
+⠁⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠟⢛⣋⣉⣉⣉⠙⢿⣿⣿⣿⣿⣿⡇⢸
+⡄⢸⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⣡⣴⣶⣿⣿⣿⣿⣿⣿⣧⠄⢿⣿⣿⣿⣿⡇⢸
+⣇⠈⣿⣿⣿⣿⣿⣿⣿⡟⠁⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡆⢸⣿⣿⣿⣿⠃⣼
+⣿⣆⠘⣿⣿⣿⣿⣿⣿⡇⣴⣤⣤⣬⣉⡛⠻⣿⣿⣿⣿⣿⡇⢸⣿⣿⣿⠃⢸⣿
+⣿⣿⣆⠘⢿⣿⣿⣿⣿⢀⣿⣿⣿⣿⣿⠿⠷⠌⠛⢛⣋⣉⣁⣸⣿⡿⠋⣠⣿⣿
+⣿⣿⣿⣶⡈⠙⢿⣿⣟⣈⣉⣩⣥⣤⣶⣶⣶⣾⣿⣿⣿⣿⣿⡿⠟⢁⣾⣿⣿⣿
+⣿⣿⣿⣿⣿⣶⣄⠉⠛⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠋⣉⣤⣶⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣷⣦⣤⣈⡉⠉⠛⣋⣉⣉⣤⣤⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿'''+Fore.RESET+'''
+This is not a script. This is library.
+You cannot run it s/c.
+'''
+
 if(len(sys.argv) > 1 and sys.argv[1] == "debugger"):
 	Logger("Debugger initialized.", CT.WARN)
 	import curses
@@ -939,3 +970,10 @@ if(len(sys.argv) > 1 and sys.argv[1] == "debugger"):
 		else:
 			a = input()
 			eval(a)
+elif(__name__ == "__main__"):
+	try:
+		print(NotAScriptMessage)
+	except Exception:
+		os._exit(-1)
+	time.sleep(10)
+	os._exit(-1)

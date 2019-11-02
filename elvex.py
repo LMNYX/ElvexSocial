@@ -11,6 +11,7 @@ import base64
 import sqlite3
 import subprocess
 import ssl
+import threading
 from OpenSSL import crypto, SSL
 from Crypto.Cipher import AES
 from Crypto.Cipher import PKCS1_OAEP
@@ -115,6 +116,15 @@ class trayActions:
 		decryptMessages = not decryptMessages
 		if(decryptMessages): print("Messages now decrypts when received!")
 		else: print("Messages now expected to be not encrypted.")
+	def switchTechWorks(s):
+		global TechWorkID
+		ReasonNames = ["Disabled", "Maintenance", "Update", "Not Listed"]
+		CurrentReason = ReasonNames[s+1]
+		print("Switched current maintenance state to "+Fore.CYAN+CurrentReason+Fore.RESET+".", CT.INFO)
+		TechWorkID = s
+	def GetCheckedMaintenance(s):
+		global TechWorkID
+		return TechWorkID == s
 	def restart():
 		print("Restarting the Elvex SOCIAL server.", CT.WARN)
 		try:
@@ -128,10 +138,6 @@ class trayActions:
 		os.execl(python, python, *sys.argv)
 	def exit():
 		os._exit(1)
-	def Exec():
-		USER_INP = simpledialog.askstring(title="Elvex",
-                                  prompt="Enter function:")
-		eval(USER_INP)
 	def checkDBs():
 		conn = sqlite3.connect('users.db')
 		c = conn.cursor()
@@ -166,12 +172,24 @@ class trayActions:
 		conn.close()
 		print("DBs checking was finished!")
 
-icon('elvex', Image.open(BytesIO(requests.get("https://avatars3.githubusercontent.com/u/56801454?s=400&u=0ca69763a92ebb07e3bcf1264d17eaed40682467&v=4").content)), menu=menu(
-	item('-- Elvex SOCIAL v'+str(version),trayActions.none, enabled=False),
-	item('Run command', trayActions.Exec),
-	item('Decrypt messages', trayActions.switchDecryption, checked=lambda item: decryptMessages),
-	item('Restart', trayActions.restart),
-	item('Exit', trayActions.exit))).run()
+@synchronized
+def IconCreate():
+	global TechWorkID
+	global trayActions
+	global icon
+	icon('elvex', Image.open(BytesIO(requests.get("https://avatars3.githubusercontent.com/u/56801454?s=400&u=0ca69763a92ebb07e3bcf1264d17eaed40682467&v=4").content)), menu=menu(
+		item('-- Elvex SOCIAL v'+str(version),trayActions.none, enabled=False),
+		item('Server settings', menu(
+			item('Decrypt messages', trayActions.switchDecryption, checked=lambda item: decryptMessages),
+			item("Maintenance", menu(
+				item('Disabled', lambda: trayActions.switchTechWorks(-1), checked=lambda i: trayActions.GetCheckedMaintenance(-1)),
+				item('Maintenance', lambda: trayActions.switchTechWorks(0), checked=lambda i: trayActions.GetCheckedMaintenance(0)),
+				item('Update', lambda: trayActions.switchTechWorks(1), checked=lambda i: trayActions.GetCheckedMaintenance(1)),
+				item('Not listed', lambda: trayActions.switchTechWorks(2), checked=lambda i: trayActions.GetCheckedMaintenance(2))
+			))
+		)),
+		item('Restart', trayActions.restart),
+		item('Exit', trayActions.exit))).run()
 
 loggedMethods = []
 
@@ -179,183 +197,200 @@ def isMethod(method):
 	global jsonMessage
 	global loggedMethods
 	if(method not in loggedMethods):
-		print("- "+method)
 		loggedMethods.append(method)
 	return jsonMessage['act'] == method
 
 class ResponseManager(object):
 	def __init__(self):
 		self.Responses = []
-	def SetError(error_code):
+	def SetError(self, error_code):
 		global Response
 		Response = EncodedString(json.dumps({'error': error_code}))
 		return True
-	def SetOkResponse(response_data = {}):
+	def SetOkResponse(self,response_data = {}):
 		response_data['response'] = "OK"
 		global Response
 		Response = EncodedString(json.dumps(response_data))
 		return True
-	def isArgument(arg):
+	def isArgument(self, arg):
 		global jsonMessage
 		return arg in jsonMessage['args']
-	def isntArgument(arg):
+	def isntArgument(self,arg):
 		global jsonMessage
 		return arg not in jsonMessage['args']
-	def isArguments(*args):
+	def isArguments(self,*args):
 		global jsonMessage
 		for arg in args:
 			if(arg not in jsonMessage['args']):
 				return False
 		return True
-	def isntArguments(*args):
+	def isntArguments(self,*args):
 		global jsonMessage
 		for arg in args:
 			if(arg in jsonMessage['args']):
 				return False
 		return True
-	def GetArgument(arg):
+	def GetArgument(self,arg):
 		global jsonMessage
-		if(isArgument(arg)):
+		if(self.isArgument(arg)):
 			return jsonMessage[arg]
 		else:
 			return ""
 
+TechWorkID = -1
 rm = ResponseManager()
-
-Response = ""
-
-while(True):
-	try:
-		bap = server.recvfrom(bufferSize)
-		if(decryptMessages):
-			message = str(cipher.decrypt(bap[0]))
-		else:
-			message = str.decode(bap[0])
-		message = message[:-1][2:]
-		address = bap[1]
-		Logger("Received packet from "+str(address[0])+" with size of "+str(address[1])+" bytes.", CT.INFO)
+def IOelvex():
+	global server
+	global cipher
+	global rm
+	global jsonMessage
+	global Response
+	global TechWorkID
+	Response = ""
+	while(True):
 		try:
-			fff = int(message)
-			del fff
-			Logger("It's int!", CT.WARN)
-			rm.SetError("NOT_JSON")
-			server.sendto(Response, address)
-			continue
-		except Exception:
-			Logger("Woah! Everything is ok!")
-		if not (is_json(message)):
-			rm.SetError("NOT_JSON")
-			server.sendto(Response, address)
-			continue
-		else:
-			jsonMessage = json.loads(message)
-		if('act' not in jsonMessage or 'args' not in jsonMessage):
-			rm.SetError("NO_METHOD")
-			server.sendto(Response, address)
-			continue
-		if(isMethod("account.Create")):
-			if (isntArguments('login', 'pswd')):
-				rm.SetError("NO_ARGS")
+			bap = server.recvfrom(bufferSize)
+			if(decryptMessages):
+				message = str(cipher.decrypt(bap[0]))
 			else:
-				r = AddUser(rm.GetArgument('login'), rm.GetArgument('pswd'),regip=str(address[0]))
-				if(r != "OK"):
-					rm.SetError(r)
-				else:
-					rm.SetOkResponse()
-		elif(isMethod("account.checkPass")):
-			if(isntArguments('login', 'pswd')):
-				rm.SetError("NO_ARGS")
+				message = str(bap[0].decode())
+			message = message[:-1][2:]
+			address = bap[1]
+			Logger("Received packet from "+str(address[0])+" with size of "+str(address[1])+" bytes.", CT.INFO)
+			try:
+				fff = int(message)
+				del fff
+				Logger("It's int!", CT.WARN)
+				rm.SetError("NOT_JSON")
+				server.sendto(Response, address)
+				continue
+			except Exception:
+				Logger("Woah! Everything is ok!")
+			if not (is_json(message)):
+				rm.SetError("NOT_JSON")
+				server.sendto(Response, address)
+				continue
 			else:
-				r = GetUser(rm.GetArgument('login'), False)
-				if(r == "USER_GONE" or r == "USER_SPACE"):
-					rm.SetError(r)
+				jsonMessage = json.loads(message)
+			if('act' not in jsonMessage or 'args' not in jsonMessage):
+				rm.SetError("NO_METHOD")
+				server.sendto(Response, address)
+				continue
+			if(isMethod("account.Create")):
+				if (rm.isntArguments('login', 'pswd')):
+					rm.SetError("NO_ARGS")
 				else:
-					r = json.loads(r)
-					if(EStr(rm.GetArgument('pswd')) != r[1]):
-						rm.SetError("BAD_PASSWORD")
-					else:
-						rm.SetOkResponse()
-		elif(isMethod("account.get")):
-			if(isntArgument('login')):
-				rm.SetError("NO_ARGS")
-			else:
-				r = GetUser(GetArgument('login'))
-				if(r == "USER_GONE" or r == "USER_SPACE"):
-					rm.SetError(r)
-				else:
-					r = r
-					rm.SetOkResponse({'{}'.format(rm.GetArgument()): {'login': r[0], 'avatar': r[1], 'electricity': r[2], 'pp': r[3], 'inventory': json.loads(r[4]), 'customization': json.loads(r[5]), 'bio': r[6], 'stats': json.loads(r[7]), 'banned': bool(r[8])}})
-		elif(isMethod("inventory.setCustomization")):
-			if(isntArguments('login', 'pswd', 'slot', 'item')):
-				rm.SetError("NO_ARGS")
-			else:
-				r = GetUser(GetArgument("login"))
-				if(r == "USER_GONE" or r == "USER_SPACE"):
-					rm.SetError(r)
-				else:
-					r = json.loads(r)
-					inv = r[4]
-					if(GetArgument('item') not in inv):
-						rm.SetError("NO_ITEM")
-					else:
-						SetCustomizationUser(r[0], rm.GetArgument('slot'), rm.GetArgument('item'))
-						rm.SetOkResponse()
-		elif isMethod("account.getBanReason"):
-			if(isntArguments('login', 'pswd')):
-				rm.SetError("NO_ARGS")
-			else:
-				r = GetUser(rm.GetArgument('login'), False)
-				if(type(r) == str):
-					rm.SetError(r)
-				elif(EStr(rm.GetArgument('pswd')) != r[1]):
-					rm.SetError("WRONG_PASS")
-				else:
-					r = GetBanReason(rm.GetArgument('login'))
-					if(type(r) == str):
+					r = AddUser(rm.GetArgument('login'), rm.GetArgument('pswd'),regip=str(address[0]))
+					if(r != "OK"):
 						rm.SetError(r)
-					elif(type(r) == int):
-						rm.SetOkResponse({'ban_reason': r})
 					else:
-						rm.SetError("UNKNOWN")
-		elif(isMethod("market.get")):
-			rm.SetOkResponse({'items': GetStoreItems()})
-		elif isMethod("market.getTimer"):
-			rm.SetOkResponse({'seconds_left': GetStoreTimer()})
-		elif(isMethod("market.buyItem")):
-			if(isntArguments('login', 'pswd','slot')):
-				rm.SetError("NO_ARGS")
-			else:
-				StoreItems = GetStoreItems()
-				try:
-					tttt = int(rm.GetArgument('slot'))
-					del tttt
-					r = GetUser(jGetArgument('login'),False)
+						rm.SetOkResponse()
+			elif(isMethod("account.checkPass")):
+				if(rm.isntArguments('login', 'pswd')):
+					rm.SetError("NO_ARGS")
+				else:
+					r = GetUser(rm.GetArgument('login'), False)
 					if(r == "USER_GONE" or r == "USER_SPACE"):
 						rm.SetError(r)
 					else:
-						if(EStr(rm.GetArgument("pswd")) != r[1]):
-							rm.SetError("WRONG_PASS")
-							server.sendto(Response, address)
-							continue
-						r = GetStoreItem(int(GetArgument('slot')))
-						if(type(r) == str):
-							rm.SetError("NO_INDEX")
+						r = json.loads(r)
+						if(EStr(rm.GetArgument('pswd')) != r[1]):
+							rm.SetError("BAD_PASSWORD")
 						else:
-							if(GetUserBalance(rm.GetArgument('login')) < r[2]):
-								rm.SetError("NO_CASH")
+							rm.SetOkResponse()
+			elif(isMethod("account.get")):
+				if(rm.isntArgument('login')):
+					rm.SetError("NO_ARGS")
+				else:
+					r = GetUser(rm.GetArgument('login'))
+					if(r == "USER_GONE" or r == "USER_SPACE"):
+						rm.SetError(r)
+					else:
+						r = r
+						rm.SetOkResponse({'{}'.format(rm.GetArgument("login")): {'login': r[0], 'avatar': r[1], 'electricity': r[2], 'pp': r[3], 'inventory': json.loads(r[4]), 'customization': json.loads(r[5]), 'bio': r[6], 'stats': json.loads(r[7]), 'banned': bool(r[8])}})
+			elif(isMethod("inventory.setCustomization")):
+				if(rm.isntArguments('login', 'pswd', 'slot', 'item')):
+					rm.SetError("NO_ARGS")
+				else:
+					r = GetUser(GetArgument("login"))
+					if(r == "USER_GONE" or r == "USER_SPACE"):
+						rm.SetError(r)
+					else:
+						r = json.loads(r)
+						inv = r[4]
+						if(rm.isntArguments('item') not in inv):
+							rm.SetError("NO_ITEM")
+						else:
+							SetCustomizationUser(r[0], rm.GetArgument('slot'), rm.GetArgument('item'))
+							rm.SetOkResponse()
+			elif isMethod("account.getBanReason"):
+				if(rm.isntArguments('login', 'pswd')):
+					rm.SetError("NO_ARGS")
+				else:
+					r = GetUser(rm.GetArgument('login'), False)
+					if(type(r) == str):
+						rm.SetError(r)
+					elif(EStr(rm.GetArgument('pswd')) != r[1]):
+						rm.SetError("WRONG_PASS")
+					else:
+						r = GetBanReason(rm.GetArgument('login'))
+						if(type(r) == str):
+							rm.SetError(r)
+						elif(type(r) == int):
+							rm.SetOkResponse({'ban_reason': r})
+						else:
+							rm.SetError("UNKNOWN")
+			elif(isMethod("market.get")):
+				rm.SetOkResponse({'items': GetStoreItems()})
+			elif isMethod("market.getTimer"):
+				rm.SetOkResponse({'seconds_left': GetStoreTimer()})
+			elif(isMethod("market.buyItem")):
+				if(rm.isntArguments('login', 'pswd','slot')):
+					rm.SetError("NO_ARGS")
+				else:
+					StoreItems = GetStoreItems()
+					try:
+						tttt = int(rm.GetArgument('slot'))
+						del tttt
+						r = GetUser(rm.GetArgument('login'),False)
+						if(r == "USER_GONE" or r == "USER_SPACE"):
+							rm.SetError(r)
+						else:
+							if(EStr(rm.GetArgument("pswd")) != r[1]):
+								rm.SetError("WRONG_PASS")
+								server.sendto(Response, address)
+								continue
+							r = GetStoreItem(int(rm.GetArgument('slot')))
+							if(type(r) == str):
+								rm.SetError("NO_INDEX")
 							else:
-								EditUser(rm.GetArgument('login'), "electricity", GetUserBalance(rm.GetArgument('login'))-r[1])
-								AddInvUser(rm.GetArgument('login'), r[0])
-								rm.SetOkResponse()
-				except Exception:
-					rm.SetError("INVALID_ARG")
-		elif(isMethod('vitya.isExists')):
-			if(GetUser("V1ktor") == "USER_GONE"):
-				rm.SetOkResponse()
+								if(GetUserBalance(rm.GetArgument('login')) < r[2]):
+									rm.SetError("NO_CASH")
+								else:
+									EditUser(rm.GetArgument('login'), "electricity", GetUserBalance(rm.GetArgument('login'))-r[1])
+									AddInvUser(rm.GetArgument('login'), r[0])
+									rm.SetOkResponse()
+					except Exception:
+						rm.SetError("INVALID_ARG")
+			elif(isMethod('vitya.isExists')):
+				if(GetUser("V1ktor") == "USER_GONE"):
+					rm.SetOkResponse()
+				else:
+					rm.SetError("VITYA_PROHIBITED")
+			elif(isMethod('server.isAlive')):
+				if (TechWorkID == -1):
+					rm.SetOkResponse({"alive": "alive"})
+				else:
+					rm.SetOkResponse({"alive": "procedures", "tech_id": TechWorkID})
 			else:
-				rm.SetError("NO_VITYA")
-		else:
-			rm.SetError("BAD_REQUEST")
-		server.sendto(Response, address)
-	except Exception as e:
-		print("Uh oh! Error approaches! ("+str(e)+")", CT.ERROR)
+				rm.SetError("BAD_REQUEST")
+			server.sendto(Response, address)
+		except Exception as e:
+			raise e
+			print("Uh oh! Error approaches! ("+str(e)+")", CT.ERROR)
+TrayThread = threading.Thread(target=IconCreate)
+IOThread = threading.Thread(target=IOelvex)
+TrayThread.start()
+IOThread.start()
+TrayThread.join()
+IOThread.join()
