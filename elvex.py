@@ -73,13 +73,11 @@ Logger("Elvex Social Server version "+str(version), CT.INFO)
 bufferSize = 1024
 config = configparser.ConfigParser()
 DefaultConfig = {}
-DefaultConfig['Connection'] = {'serverip': '127.0.0.1','port': '60606','version': 3}
-DefaultConfig['Encryption'] = {'adminkey': '123321'}
+DefaultConfig['Connection'] = {'serverip': '127.0.0.1','port': '60606','version': 3, "servername": "Social Unnamed"}
 Logger("Checking config...", CT.NONE)
 if not(os.path.isfile("server.ini")):
 	Logger("Config doesn't exists. Creating...", CT.WARN)
 	config['Connection'] = DefaultConfig['Connection']
-	config['Encryption'] = DefaultConfig['Encryption']
 	with open('server.ini', 'w') as cf:
 		config.write(cf)
 
@@ -89,7 +87,6 @@ Logger("Config imported.", CT.INFO)
 if('version' not in config['Connection'] or int(config['Connection']['version']) != version):
 	print("Version of server.ini and server doesn't match. Recreating server.ini", CT.WARN)
 	config['Connection'] = DefaultConfig['Connection']
-	config['Encryption'] = DefaultConfig['Encryption']
 	with open('server.ini', 'w') as cf:
 		config.write(cf)
 LogPrint("Starting server on IP "+config['Connection']['serverip']+" with port "+config["Connection"]['port'], CT.INFO)
@@ -251,10 +248,18 @@ def IOelvex():
 		try:
 			bap = server.recvfrom(bufferSize)
 			if(decryptMessages):
-				message = str(cipher.decrypt(bap[0]))
+				try:
+					message = str(cipher.decrypt(bap[0]))
+					message = message[:-1][2:]
+				except Exception:
+					Logger("Decrypting with key was failed, trying without encryption.", CT.WARN)
+					try:
+						message = str(bap[0].decode())
+					except Exception:
+						Logger("Message corrupted! All attempts to read the message was failed. Skipping this message.", CT.ERROR)
+						continue
 			else:
 				message = str(bap[0].decode())
-			message = message[:-1][2:]
 			address = bap[1]
 			Logger("Received packet from "+str(address[0])+" with size of "+str(address[1])+" bytes.", CT.INFO)
 			try:
@@ -379,9 +384,9 @@ def IOelvex():
 					rm.SetError("VITYA_PROHIBITED")
 			elif(isMethod('server.isAlive')):
 				if (TechWorkID == -1):
-					rm.SetOkResponse({"alive": "alive"})
+					rm.SetOkResponse({"alive": "alive", "server_name": config['Connection']['servername']})
 				else:
-					rm.SetOkResponse({"alive": "procedures", "tech_id": TechWorkID})
+					rm.SetOkResponse({"alive": "procedures", "tech_id": TechWorkID, "server_name": config['Connection']['servername']})
 			else:
 				rm.SetError("BAD_REQUEST")
 			server.sendto(Response, address)
