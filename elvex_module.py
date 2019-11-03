@@ -738,8 +738,10 @@ def GiveUserBadge(username, badge_code):
 class CommandHandler(object):
 	def __init__(self):
 		self.currentCmd = ""
+		# "": {"run": lambda: self.callFunc(""), "desc": "", "singleArg": False}
 		self.Commands = {
-			"help": {"run": lambda: self.callFunc("help"), "desc": "List of all commands.", "singleArg": False}
+			"help": {"run": lambda: self.callFunc("help"), "desc": "List of all commands.", "singleArg": False},
+			"stop": {"run": lambda: self.callFunc("stop"), "desc": "Stop the server.", "singleArg": False}
 		}
 		return
 	def callFunc(self, cmd):
@@ -747,6 +749,9 @@ class CommandHandler(object):
 			print("Currently there is "+Fore.CYAN+str(len(self.Commands))+Fore.RESET+" commands.")
 			for cmd in self.Commands:
 				print(Fore.CYAN+cmd+Fore.RESET+" - "+self.Commands[cmd]['desc'])
+		elif(cmd == "stop"):
+			print("Server is shutting down...", CT.INFO)
+			os._exit(1)
 		return
 	def Run(self, fullcmd):
 		args = fullcmd.split(' ')
