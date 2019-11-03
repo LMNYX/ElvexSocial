@@ -133,6 +133,8 @@ def eprint(t):
 	"""Prints with newline."""
 	sys.stdout.write(t+'\n')
 
+
+
 def Logger(stri,type = CT.NONE):
 	"""Add message to log."""
 	global StartTime
@@ -732,6 +734,37 @@ def GiveUserBadge(username, badge_code):
 	conn.commit()
 	conn.close()
 	return "OK"
+
+class CommandHandler(object):
+	def __init__(self):
+		self.currentCmd = ""
+		self.Commands = {
+			"help": {"run": lambda: self.callFunc("help"), "desc": "List of all commands.", "singleArg": False}
+		}
+		return
+	def callFunc(self, cmd):
+		if(cmd == "help"):
+			print("Currently there is "+Fore.CYAN+str(len(self.Commands))+Fore.RESET+" commands.")
+			for cmd in self.Commands:
+				print(Fore.CYAN+cmd+Fore.RESET+" - "+self.Commands[cmd]['desc'])
+		return
+	def Run(self, fullcmd):
+		args = fullcmd.split(' ')
+		args.pop(0)
+		singlearg = ' '.join(args)
+		cmd = fullcmd.split(' ', 1)[0]
+		args = filter(None, args)
+		self.currentCmd = cmd
+		if(cmd in self.Commands):
+			try:
+				if(self.Commands[cmd]['singleArg']):
+					self.Commands[cmd]['run'](singlearg)
+				else:
+					self.Commands[cmd]['run'](*args)
+			except Exception as e:
+				print(str(e), CT.ERROR)
+		else:
+			print("No command named "+Fore.RED+cmd+Fore.RESET+" found. Use `help` to list all commands.")
 
 # -- Debugger-only tools
 

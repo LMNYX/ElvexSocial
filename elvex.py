@@ -9,8 +9,10 @@ import hmac
 import hashlib
 import base64
 import sqlite3
+import logging
 import subprocess
 import ssl
+import elvex_module
 import threading
 from OpenSSL import crypto, SSL
 from Crypto.Cipher import AES
@@ -95,6 +97,7 @@ if(config['Connection']['serverip'] == "127.0.0.1" or config['Connection']['serv
 	config['Connection']['serverip'] == ""
 server.bind((config['Connection']['serverip'], int(config['Connection']['port'])))
 print("Ready to listen.", CT.INFO)
+print("Server with name "+Fore.CYAN+config['Connection']['servername']+Fore.RESET+" was started!")
 try:
 	key = RSA.importKey(open('private.pem').read())
 	cipher = PKCS1_OAEP.new(key)
@@ -393,9 +396,21 @@ def IOelvex():
 		except Exception as e:
 			raise e
 			print("Exception called while parsing request from client "+address+" ("+str(e)+")", CT.ERROR)
+
+@synchronized
+def InputConsole():
+	while (true):
+		sys.stdout.write('> ')
+		cmd = sys.stdin.readline()
+		cmd = cmd.split('\n')[0]
+		elvex_module.CommandHandler().Run(cmd)
+
 TrayThread = threading.Thread(target=IconCreate)
 IOThread = threading.Thread(target=IOelvex)
+ConsoleThread = threading.Thread(target=InputConsole)
 TrayThread.start()
 IOThread.start()
+ConsoleThread.start()
 TrayThread.join()
 IOThread.join()
+ConsoleThread.join()
