@@ -89,12 +89,12 @@ if('version' not in config['Connection'] or int(config['Connection']['version'])
 	config['Connection'] = DefaultConfig['Connection']
 	with open('server.ini', 'w') as cf:
 		config.write(cf)
-LogPrint("Starting server on IP "+config['Connection']['serverip']+" with port "+config["Connection"]['port'], CT.INFO)
+print("Starting server on IP "+config['Connection']['serverip']+" with port "+config["Connection"]['port'], CT.INFO)
 server = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 if(config['Connection']['serverip'] == "127.0.0.1" or config['Connection']['serverip'] == ""):
 	config['Connection']['serverip'] == ""
 server.bind((config['Connection']['serverip'], int(config['Connection']['port'])))
-LogPrint("Ready to listen.", CT.INFO)
+print("Ready to listen.", CT.INFO)
 try:
 	key = RSA.importKey(open('private.pem').read())
 	cipher = PKCS1_OAEP.new(key)
@@ -392,7 +392,7 @@ def IOelvex():
 			server.sendto(Response, address)
 		except Exception as e:
 			raise e
-			print("Uh oh! Error approaches! ("+str(e)+")", CT.ERROR)
+			print("Exception called while parsing request from client "+address+" ("+str(e)+")", CT.ERROR)
 TrayThread = threading.Thread(target=IconCreate)
 IOThread = threading.Thread(target=IOelvex)
 TrayThread.start()
