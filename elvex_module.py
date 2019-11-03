@@ -49,7 +49,7 @@ def clear():
 	if(platform.system() == "Windows"): os.system("cls")
 	else: os.system("clear")
 
-NotList = ["Void","Enum", "gmtime", "strftime", "init", "ohelp", "CT", "oprint", "round50", "create_self_signed_cert","completer","v", "dbgSwitchErrorDisplay", "dbgNoDebug"]
+NotList = ["is_valid_command", "CompleterLoad","Void","Enum", "gmtime", "strftime", "init", "ohelp", "CT", "oprint", "round50", "create_self_signed_cert","completer","v", "dbgSwitchErrorDisplay", "dbgNoDebug"]
 def help():
 	"""List of all functions."""
 	global NotList
