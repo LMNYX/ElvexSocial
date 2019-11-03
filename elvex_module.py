@@ -735,23 +735,38 @@ def GiveUserBadge(username, badge_code):
 	conn.close()
 	return "OK"
 
+BannedMethods = []
+
 class CommandHandler(object):
 	def __init__(self):
 		self.currentCmd = ""
 		# "": {"run": lambda: self.callFunc(""), "desc": "", "singleArg": False}
 		self.Commands = {
 			"help": {"run": lambda: self.callFunc("help"), "desc": "List of all commands.", "singleArg": False},
-			"stop": {"run": lambda: self.callFunc("stop"), "desc": "Stop the server.", "singleArg": False}
+			"stop": {"run": lambda: self.callFunc("stop"), "desc": "Stop the server.", "singleArg": False},
+			"togglemethod": {"run": lambda m: self.callFunc("togglemethod", m), "desc": "Toggles API method.", "singleArg": True},
+			"yee": {"run": lambda: self.callFunc("haw"), "desc": "yee haw", "singleArg": False, "unlisted": True}
 		}
 		return
-	def callFunc(self, cmd):
+	def callFunc(self, cmd, *args):
 		if(cmd == "help"):
-			print("Currently there is "+Fore.CYAN+str(len(self.Commands))+Fore.RESET+" commands.")
+			print("Currently there is "+Fore.CYAN+str(len(self.Commands))+Fore.RESET+" total commands.")
 			for cmd in self.Commands:
-				print(Fore.CYAN+cmd+Fore.RESET+" - "+self.Commands[cmd]['desc'])
+				if not ("unlisted" in self.Commands[cmd] and self.Commands[cmd]['unlisted']):
+					print(Fore.CYAN+cmd+Fore.RESET+" - "+self.Commands[cmd]['desc'])
 		elif(cmd == "stop"):
 			print("Server is shutting down...", CT.INFO)
 			os._exit(1)
+		elif(cmd == "togglemethod"):
+			global BannedMethods
+			if(args[0] in BannedMethods):
+				BannedMethods.remove(args[0])
+				print("You enabled "+Fore.CYAN+args[0]+Fore.RESET+" method!", CT.INFO)
+			else:
+				BannedMethods.append(args[0])
+				print("You disabled "+Fore.CYAN+args[0]+Fore.RESET+" method!", CT.INFO)
+		elif(cmd == "yee"):
+			print("haw")
 		return
 	def Run(self, fullcmd):
 		args = fullcmd.split(' ')

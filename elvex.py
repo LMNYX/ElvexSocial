@@ -284,6 +284,10 @@ def IOelvex():
 				rm.SetError("NO_METHOD")
 				server.sendto(Response, address)
 				continue
+			if(jsonMessage['act'] in BannedMethods):
+				rm.SetError("METHOD_UNAVAILABLE")
+				server.sendto(Response, address)
+				continue
 			if(isMethod("account.Create")):
 				if (rm.isntArguments('login', 'pswd')):
 					rm.SetError("NO_ARGS")
