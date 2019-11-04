@@ -7,6 +7,7 @@ from elvex_module import *
 import json
 import hmac
 import hashlib
+from http.server import BaseHTTPRequestHandler,HTTPServer
 import base64
 import sqlite3
 import logging
@@ -95,7 +96,12 @@ print("Starting server on IP "+config['Connection']['serverip']+" with port "+co
 server = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 if(config['Connection']['serverip'] == "127.0.0.1" or config['Connection']['serverip'] == ""):
 	config['Connection']['serverip'] == ""
-server.bind((config['Connection']['serverip'], int(config['Connection']['port'])))
+try:
+	server.bind((config['Connection']['serverip'], int(config['Connection']['port'])))
+except Exception:
+	print("Port "+Fore.CYAN+config['Connection']['port']+Fore.RESET+" is already in use.", CT.ERROR)
+	time.sleep(10)
+	os._exit(-1)
 print("Ready to listen.", CT.INFO)
 print("Server with name "+Fore.CYAN+config['Connection']['servername']+Fore.RESET+" was started!")
 try:
@@ -237,8 +243,37 @@ class ResponseManager(object):
 		else:
 			return ""
 
+class HTTPHandler(BaseHTTPRequestHandler):
+	
+	#Handler for the GET requests
+	def do_GET(self):
+		try:
+			mimetype='text/html'
+			self.send_response(200)
+			self.send_header('Content-type',mimetype)
+			self.end_headers()
+			if(self.path == "/"):
+				self.wfile.write(("<title>ELVEX SOCIAL</title>").encode())
+				self.wfile.write("<button>do nothing</button>".encode())
+			else:
+				self.send_response(404)
+				self.wfile.write(("<title>Not Found</title>").encode())
+				self.wfile.write("<h1>404 Not Found</h1><hr>This page doesn't exists. You will be redirected to the home page in 5 seconds.<script>window.onload = function(){ setTimeout(function(){ window.location.href = '/'; }, 5000); }</script>".encode())
+			return
+		except IOError:
+			self.send_response(404)
+			self.wfile.write("<h1>404 Not Found</h1><hr>This page doesn't exists. You will be redirected to the home page in 5 seconds.<script>window.onload = function(){ setTimeout(function(){ window.location.href = '/'; }, 5000); }</script>".encode())
+	def log_message(self, format, *args):
+		Logger("[HTTP] %s - - [%s] %s\n" % (self.address_string(),self.log_date_time_string(),format%args))
+		return
+
 TechWorkID = -1
 rm = ResponseManager()
+def HTTPAServer():
+	print("HTTP server started at 127.0.0.1:55155", CT.INFO)
+	server = HTTPServer(('', 55155), HTTPHandler)
+	server.serve_forever()
+
 def IOelvex():
 	global server
 	global cipher
@@ -410,11 +445,15 @@ def InputConsole():
 		elvex_module.CommandHandler().Run(cmd)
 
 TrayThread = threading.Thread(target=IconCreate)
+HTTPThread = threading.Thread(target=HTTPAServer)
 IOThread = threading.Thread(target=IOelvex)
 ConsoleThread = threading.Thread(target=InputConsole)
 TrayThread.start()
 IOThread.start()
+HTTPThread.start()
 ConsoleThread.start()
 TrayThread.join()
 IOThread.join()
+HTTPThread.join()
+time.sleep(0.2)
 ConsoleThread.join()

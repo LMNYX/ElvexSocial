@@ -34,6 +34,19 @@ db_AdditionalsVer = 1
 db_usersVer = 1
 version = 3
 oprint = print
+oopen = open
+
+def open(fn, t = "r"):
+	global oopen
+	Openned = False
+	while not(Openned):
+		try:
+			fl = oopen(fn, t)
+			Openned = True
+		except IOError:
+			Logger("Open of "+fn+" was failed. Trying again.", CT.ERROR)
+			continue
+	return fl
 
 
 
