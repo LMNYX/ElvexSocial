@@ -27,9 +27,11 @@ try:
 except ImportError:
     import pyreadline as readline
 import npyscreen
-if(platform.system() == "Windows"):
+try:
 	import subprocess
-
+except:
+	subprocessUndefined = True
+	# that's fine.
 db_AdditionalsVer = 1
 db_usersVer = 1
 version = 3
