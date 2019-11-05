@@ -1,4 +1,4 @@
-"help"
-"fakedelay 0"
-"fakedelay 1"
-"stop"
+help
+fakedelay 0
+fakedelay 1
+stop
