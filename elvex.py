@@ -23,7 +23,11 @@ from Crypto.PublicKey import RSA
 from Crypto.Util.asn1 import DerSequence
 from binascii import a2b_base64
 from PIL import Image, ImageDraw
-from pystray import Icon as icon, Menu as menu, MenuItem as item
+try:
+	from pystray import Icon as icon, Menu as menu, MenuItem as item
+	DisableTray = False
+except:
+	DisableTray = True
 import requests
 from io import BytesIO
 import psutil
@@ -184,6 +188,8 @@ def IconCreate():
 	global TechWorkID
 	global trayActions
 	global icon
+	global DisableTray
+	if(DisableTray): return
 	icon('elvex', Image.open(BytesIO(requests.get("https://avatars3.githubusercontent.com/u/56801454?s=400&u=0ca69763a92ebb07e3bcf1264d17eaed40682467&v=4").content)), menu=menu(
 		item('-- Elvex SOCIAL v'+str(version),trayActions.none, enabled=False),
 		item('Server settings', menu(
