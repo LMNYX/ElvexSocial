@@ -749,7 +749,7 @@ def GiveUserBadge(username, badge_code):
 	return "OK"
 
 BannedMethods = []
-
+MessageDelay = 0
 class CommandHandler(object):
 	def __init__(self):
 		self.currentCmd = ""
@@ -758,7 +758,8 @@ class CommandHandler(object):
 			"help": {"run": lambda: self.callFunc("help"), "desc": "List of all commands.", "singleArg": False},
 			"stop": {"run": lambda: self.callFunc("stop"), "desc": "Stop the server.", "singleArg": False},
 			"togglemethod": {"run": lambda m: self.callFunc("togglemethod", m), "desc": "Toggles API method.", "singleArg": True},
-			"yee": {"run": lambda: self.callFunc("haw"), "desc": "yee haw", "singleArg": False, "unlisted": True}
+			"yee": {"run": lambda: self.callFunc("yee"), "desc": "yee haw", "singleArg": False, "unlisted": True},
+			"fakedelay": {"run": lambda i: self.callFunc("fakedelay", i), "desc": "Adds fake delay before answering.", "singleArg": False}
 		}
 		return
 	def callFunc(self, cmd, *args):
@@ -770,6 +771,16 @@ class CommandHandler(object):
 		elif(cmd == "stop"):
 			print("Server is shutting down...", CT.INFO)
 			os._exit(1)
+		elif(cmd == "fakedelay"):
+			global MessageDelay
+			try:
+				int(args[0])
+			except Exception as e:
+				print("Argument must be integer-type.", CT.ERROR)
+				return
+			
+			MessageDelay = int(args[0])
+			print("Set fake delay to "+Fore.CYAN+str(MessageDelay)+Fore.RESET+" seconds.")
 		elif(cmd == "togglemethod"):
 			global BannedMethods
 			if(args[0] in BannedMethods):

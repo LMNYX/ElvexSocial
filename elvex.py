@@ -10,6 +10,7 @@ import hashlib
 from http.server import BaseHTTPRequestHandler,HTTPServer
 import base64
 import sqlite3
+import asyncio
 import logging
 import subprocess
 import ssl
@@ -211,11 +212,15 @@ class ResponseManager(object):
 		self.Responses = []
 	def SetError(self, error_code):
 		global Response
+		global MessageDelay
+		time.sleep(MessageDelay)
 		Response = EncodedString(json.dumps({'error': error_code}))
 		return True
 	def SetOkResponse(self,response_data = {}):
 		response_data['response'] = "OK"
 		global Response
+		global MessageDelay
+		time.sleep(MessageDelay)
 		Response = EncodedString(json.dumps(response_data))
 		return True
 	def isArgument(self, arg):
@@ -433,8 +438,7 @@ def IOelvex():
 				rm.SetError("BAD_REQUEST")
 			server.sendto(Response, address)
 		except Exception as e:
-			raise e
-			print("Exception called while parsing request from client "+address+" ("+str(e)+")", CT.ERROR)
+			print("Exception called while parsing request from client "+address[0]+" ("+str(e)+")", CT.ERROR)
 
 @synchronized
 def InputConsole():
