@@ -244,7 +244,7 @@ class ResponseManager(object):
 	def GetArgument(self,arg):
 		global jsonMessage
 		if(self.isArgument(arg)):
-			return jsonMessage[arg]
+			return jsonMessage['args'][arg]
 		else:
 			return ""
 
@@ -286,6 +286,7 @@ def IOelvex():
 	global jsonMessage
 	global Response
 	global TechWorkID
+	isDebugRun = False
 	Response = ""
 	while(True):
 		try:
@@ -345,7 +346,6 @@ def IOelvex():
 					if(r == "USER_GONE" or r == "USER_SPACE"):
 						rm.SetError(r)
 					else:
-						r = json.loads(r)
 						if(EStr(rm.GetArgument('pswd')) != r[1]):
 							rm.SetError("BAD_PASSWORD")
 						else:
@@ -364,11 +364,10 @@ def IOelvex():
 				if(rm.isntArguments('login', 'pswd', 'slot', 'item')):
 					rm.SetError("NO_ARGS")
 				else:
-					r = GetUser(GetArgument("login"))
+					r = GetUser(rm.GetArgument("login"))
 					if(r == "USER_GONE" or r == "USER_SPACE"):
 						rm.SetError(r)
 					else:
-						r = json.loads(r)
 						inv = r[4]
 						if(rm.isntArguments('item') not in inv):
 							rm.SetError("NO_ITEM")
@@ -429,6 +428,9 @@ def IOelvex():
 					rm.SetOkResponse()
 				else:
 					rm.SetError("VITYA_PROHIBITED")
+			elif(isMethod('debug.raiseError')):
+				if(isDebugRun):
+					unkFunc()
 			elif(isMethod('server.isAlive')):
 				if (TechWorkID == -1):
 					rm.SetOkResponse({"alive": "alive", "server_name": config['Connection']['servername']})
@@ -438,7 +440,8 @@ def IOelvex():
 				rm.SetError("BAD_REQUEST")
 			server.sendto(Response, address)
 		except Exception as e:
-			print("Exception called while parsing request from client "+address[0]+" ("+str(e)+")", CT.ERROR)
+			rm.SetError("EXCEPTION_TASK")
+			server.sendto(Response, address)
 
 @synchronized
 def InputConsole():
@@ -455,9 +458,10 @@ ConsoleThread = threading.Thread(target=InputConsole)
 TrayThread.start()
 IOThread.start()
 HTTPThread.start()
+time.sleep(0.7)
 ConsoleThread.start()
 TrayThread.join()
 IOThread.join()
 HTTPThread.join()
-time.sleep(0.2)
+time.sleep(0.7)
 ConsoleThread.join()
