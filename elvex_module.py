@@ -913,11 +913,13 @@ elif platform.system() == "Darwin":
 elif platform.system() == "Linux":
 	foundProc = True
 	command = "cat /proc/cpuinfo"
-	all_info = subprocess.check_output(command, shell=True).strip()
-	all_info = all_info.encode()
-	for line in all_info.split("\n"):
-		if "model name" in line:
-			Logger("Processor: "+str(re.sub( ".*model name.*:", "", line,1)))
+	try:
+		all_info = subprocess.check_output(command, shell=True).strip()
+		for line in all_info.split("\n"):
+			if "model name" in line:
+				Logger("Processor: "+str(re.sub( ".*model name.*:", "", line,1)))
+	except Exception:
+		foundProc = False
 
 if not foundProc:
 	Logger("Processor: Unknown")
