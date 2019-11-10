@@ -1,4 +1,4 @@
-# Elvex Social Server
+# Elvex Social Server [![GitHub issues](https://img.shields.io/github/issues/lmnyx/ElvexSocial)](https://github.com/lmnyx/ElvexSocial/issues) [![GitHub license](https://img.shields.io/github/license/lmnyx/ElvexSocial)](https://github.com/lmnyx/ElvexSocial/blob/master/LICENSE) ![GitHub Pipenv locked Python version](https://img.shields.io/github/pipenv/locked/python-version/lmnyx/ElvexSocial)
 Official ELVEX SOCIAL server. 
 
 ## Requirements
