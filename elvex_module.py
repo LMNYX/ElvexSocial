@@ -823,20 +823,7 @@ class CommandHandler(object):
 # -- Debugger-only tools
 
 def fprint(msg):
-	Regex = r'[{]\w+[}]'
-	retMsg = msg
-	vars = re.findall(Regex, msg)
-	for var in vars:
-		varR = var[1:]
-		varR = varR[:-1]
-		if(varR in locals()):
-			varR = str(locals()[varR])
-		elif(varR in globals()):
-			varR = str(globals()[varR])
-		else:
-			varR = "(Null)"
-		retMsg = retMsg.replace(str(var), varR)
-	print(retMsg)
+	print(fstr(msg))
 
 def fstr(msg):
 	Regex = r'[{]\w+[}]'
