@@ -18,7 +18,6 @@ import traceback
 import threading
 import elvex_module
 import inspect
-from OpenSSL import crypto, SSL
 from socket import gethostname
 import psutil
 import prompt_toolkit

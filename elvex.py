@@ -18,11 +18,6 @@ import ssl
 import webbrowser
 import elvex_module
 import threading
-from OpenSSL import crypto, SSL
-from Crypto.Cipher import AES
-from Crypto.Cipher import PKCS1_OAEP
-from Crypto.PublicKey import RSA
-from Crypto.Util.asn1 import DerSequence
 from binascii import a2b_base64
 from PIL import Image, ImageDraw
 try:
@@ -42,41 +37,6 @@ Logger("Python importing complete.", CT.INFO)
 
 init(autoreset=True)
 Logger("Colorama initialized.", CT.INFO)
-
-
-if not (os.path.isfile("private.pem")):
-	if not (os.path.isfile("public.pem")):
-		key = RSA.generate(2048)
-		private_key = key.export_key()
-		file_out = open("private.pem", "wb")
-		file_out.write(private_key)
-		file_out.close()
-		public_key = key.publickey().export_key()
-		file_out = open("public.pem", "wb")
-		file_out.write(public_key)
-		file_out.close()
-	else:
-		os.unlink("public.pem")
-		key = RSA.generate(2048)
-		private_key = key.export_key()
-		file_out = open("private.pem", "wb")
-		file_out.write(private_key)
-		file_out.close()
-		public_key = key.publickey().export_key()
-		file_out = open("public.pem", "wb")
-		file_out.write(public_key)
-		file_out.close()
-else:
-	if not (os.path.isfile("public.pem")):
-		key = RSA.generate(2048)
-		private_key = key.export_key()
-		file_out = open("private.pem", "wb")
-		file_out.write(private_key)
-		file_out.close()
-		public_key = key.publickey().export_key()
-		file_out = open("public.pem", "wb")
-		file_out.write(public_key)
-		file_out.close()
 
 Logger("Elvex Social Server version "+str(version), CT.INFO)
 
@@ -116,19 +76,6 @@ except Exception:
 	print("Port "+Fore.CYAN+config['Connection']['port']+Fore.RESET+" is already in use.", CT.ERROR)
 	time.sleep(10)
 	os._exit(-1)
-try:
-	key = RSA.importKey(open('private.pem').read())
-	cipher = PKCS1_OAEP.new(key)
-except Exception:
-	print("Bad RSA key. Recreate it. Decryption was disabled.", CT.ERROR)
-	LockDecryption = True
-state=False
-
-if('LockDecryption' in locals()):
-	decryptMessages = False
-else:
-	LockDecryption = False
-	decryptMessages = True
 
 class trayActions:
 	def none():
@@ -137,14 +84,7 @@ class trayActions:
 	def dashboardOpen():
 		webbrowser.open('http://localhost:55155', new=0, autoraise=True)
 	def switchDecryption():
-		global decryptMessages
-		global LockDecryption
-		if(LockDecryption):
-			print("This variable is locked by Elvex Security Protocol! You cannot change it, until the error fixed.", CT.ERROR)
-			return
-		decryptMessages = not decryptMessages
-		if(decryptMessages): print("Messages now decrypts when received!")
-		else: print("Messages now expected to be not encrypted.")
+		print("Deprecated method. Will be removed in v3 COMPLETELY.")
 	def switchTechWorks(s):
 		global TechWorkID
 		ReasonNames = ["Disabled", "Maintenance", "Update", "Not Listed"]
@@ -219,7 +159,6 @@ def IconCreate():
 		item('-- Elvex SOCIAL v'+str(version),trayActions.none, enabled=False),
 		item('Dashboard', trayActions.dashboardOpen),
 		item('Server settings', menu(
-			item('Decrypt messages', trayActions.switchDecryption, checked=lambda item: decryptMessages),
 			item("Maintenance", menu(
 				item('Disabled', lambda: trayActions.switchTechWorks(-1), checked=lambda i: trayActions.GetCheckedMaintenance(-1)),
 				item('Maintenance', lambda: trayActions.switchTechWorks(0), checked=lambda i: trayActions.GetCheckedMaintenance(0)),
@@ -325,19 +264,7 @@ def IOelvex():
 	while(True):
 		try:
 			bap = server.recvfrom(bufferSize)
-			if(decryptMessages):
-				try:
-					message = str(cipher.decrypt(bap[0]))
-					message = message[:-1][2:]
-				except Exception:
-					Logger("Decrypting with key was failed, trying without encryption.", CT.WARN)
-					try:
-						message = str(bap[0].decode())
-					except Exception:
-						Logger("Message corrupted! All attempts to read the message was failed. Skipping this message.", CT.ERROR)
-						continue
-			else:
-				message = str(bap[0].decode())
+			message = str(bap[0].decode())
 			address = bap[1]
 			Logger("Received packet from "+str(address[0])+" with size of "+str(address[1])+" bytes.", CT.INFO)
 			try:
@@ -381,6 +308,8 @@ def IOelvex():
 						rm.SetError(r)
 					else:
 						if(EStr(rm.GetArgument('pswd')) != r[1]):
+							print(r[1])
+							print(str(EStr(rm.GetArgument('pswd'))))
 							rm.SetError("BAD_PASSWORD")
 						else:
 							rm.SetOkResponse()
