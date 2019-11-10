@@ -14,6 +14,7 @@ import hashlib
 import base64
 import binascii
 import re
+import traceback
 import threading
 import elvex_module
 import inspect
@@ -35,8 +36,15 @@ except:
 db_AdditionalsVer = 1
 db_usersVer = 1
 version = 3
+
 oprint = print
 oopen = open
+PromoteFromWeb = True
+
+def TempErrHook(exctype, val, tb):
+	print('[{}] {} ({})'.format(exctype, val, tb))
+
+sys.excepthook = TempErrHook # TEMP UNTIL MODULE FINISHED LOADING
 
 def open(fn, t = "r"):
 	global oopen
@@ -813,6 +821,109 @@ class CommandHandler(object):
 			print("No command named "+Fore.RED+cmd+Fore.RESET+" found. Use `help` to list all commands.")
 
 # -- Debugger-only tools
+
+def fprint(msg):
+	Regex = r'[{]\w+[}]'
+	retMsg = msg
+	vars = re.findall(Regex, msg)
+	for var in vars:
+		varR = var[1:]
+		varR = varR[:-1]
+		if(varR in locals()):
+			varR = str(locals()[varR])
+		elif(varR in globals()):
+			varR = str(globals()[varR])
+		else:
+			varR = "(Null)"
+		retMsg = retMsg.replace(str(var), varR)
+	print(retMsg)
+
+def fstr(msg):
+	Regex = r'[{]\w+[}]'
+	retMsg = msg
+	vars = re.findall(Regex, msg)
+	for var in vars:
+		varR = var[1:]
+		varR = varR[:-1]
+		if(varR in locals()):
+			varR = str(locals()[varR])
+		elif(varR in globals()):
+			varR = str(globals()[varR])
+		else:
+			varR = "(Null)"
+		retMsg = retMsg.replace(str(var), varR)
+	return (retMsg)
+
+class ESP(object):
+	def __init__(self):
+		self.inited = True
+	def print(self, msg, mtype = CT.NONE):
+		print(Fore.YELLOW+"[ESP] "+Fore.RESET+msg, mtype)
+	class ErrorClassification(Enum):
+		Unknown = -1,
+		Unassigned = 0,
+		Safe = 1,
+		Unsafe = 2,
+		Euclid = 3,
+		Keter = 4,
+		Thaumiel = 5,
+		Neutralized = 6,
+		Apocalypse = 7
+	def GetClassClassification(self, classname):
+		ClassifiedErrors = {
+			"BaseException": [self.ErrorClassification.Safe, Fore.GREEN],
+			"Exception": [self.ErrorClassification.Unknown, Fore.RED],
+			"ArithmeticError": [self.ErrorClassification.Unsafe, Fore.YELLOW],
+			"BufferError": [self.ErrorClassification.Euclid, Fore.RED],
+			"LookupError": [self.ErrorClassification.Euclid, Fore.RED],
+			"AssertionError": [self.ErrorClassification.Unsafe, Fore.YELLOW],
+			"AttributeError": [self.ErrorClassification.Unsafe, Fore.YELLOW],
+			"EOFError": [self.ErrorClassification.Thaumiel, Fore.CYAN],
+			"FloatingPointError": [self.ErrorClassification.Neutralized,Fore.RESET],
+			"ImportError": [self.ErrorClassification.Apocalypse,Fore.MAGENTA],
+			"ModuleNotFound": [self.ErrorClassification.Apocalypse,Fore.MAGENTA],
+			"IndexError": [self.ErrorClassification.Euclid, Fore.RED],
+			"KeyError": [self.ErrorClassification.Euclid, Fore.RED],
+			"MemoryError": [self.ErrorClassification.Apocalypse,Fore.MAGENTA],
+			"NameError": [self.ErrorClassification.Euclid, Fore.RED],
+			"NotImplementedError": [self.ErrorClassification.Euclid, Fore.RED],
+			"OSError": [self.ErrorClassification.Keter,Fore.RED],
+			"OverflowError": [self.ErrorClassification.Thaumiel,Fore.CYAN],
+			"RecursionError": [self.ErrorClassification.Keter,Fore.RED],
+			"ReferenceError": [self.ErrorClassification.Keter,Fore.RED],
+			"RuntimeError": [self.ErrorClassification.Keter,Fore.RED],
+			"StopInteration": [self.ErrorClassification.Unsafe, Fore.YELLOW],
+			"StopAsyncIteration": [self.ErrorClassification.Unsafe, Fore.YELLOW],
+			"SyntaxError": [self.ErrorClassification.Keter,Fore.RED],
+			"IndentationError": [self.ErrorClassification.Unknown,Fore.RESET],
+			"TabError": [self.ErrorClassification.Apocalypse,Fore.MAGENTA],
+			"SystemError": [self.ErrorClassification.Keter,Fore.RED],
+			"SystemExit": [self.ErrorClassification.Unknown,Fore.RESET],
+			"TypeError": [self.ErrorClassification.Euclid, Fore.RED],
+			"UnbondLocalError": [self.ErrorClassification.Keter,Fore.RED],
+			"UnicodeError": [self.ErrorClassification.Keter,Fore.RED],
+			"ValueError": [self.ErrorClassification.Thaumiel, Fore.CYAN],
+			"ZeroDivisionError": [self.ErrorClassification.Apocalypse,Fore.MAGENTA],
+			"EnvironmentError": [self.ErrorClassification.Thaumiel, Fore.CYAN],
+			"IOError": [self.ErrorClassification.Thaumiel, Fore.CYAN],
+			"WindowsError": [self.ErrorClassification.Thaumiel, Fore.CYAN]
+		}
+		if not classname in ClassifiedErrors:
+			return [self.ErrorClassification.Unassigned, Fore.CYAN]
+		else:
+			return ClassifiedErrors[classname]
+	def TracebackHook(self, e, v, t):
+		self.print('Error just raised with errortype: '+str(e.__name__)+'.', CT.ERROR)
+		esp_error = self.GetClassClassification(str(e.__name__))
+		self.print('We classified this error as '+esp_error[1]+str(esp_error[0])+Fore.RESET+'.', CT.ERROR)
+		self.print("ErrorValue: "+str(v), CT.ERROR)
+		self.print("Traceback: "+str(traceback.extract_tb(t)), CT.ERROR)
+		self.print("Server will be closed, because this error may broke something.", CT.INFO)
+		self.print("// To-Do: In future wanted to keep working after error handled (sys module doesn't give to do that.)", CT.INFO)
+
+esp = ESP()
+
+sys.excepthook = esp.TracebackHook
 
 class nolist_createUser(npyscreen.Form):
 	def create(self):

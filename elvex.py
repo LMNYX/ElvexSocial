@@ -12,8 +12,10 @@ import base64
 import sqlite3
 import asyncio
 import logging
+import traceback
 import subprocess
 import ssl
+import webbrowser
 import elvex_module
 import threading
 from OpenSSL import crypto, SSL
@@ -78,6 +80,13 @@ else:
 
 Logger("Elvex Social Server version "+str(version), CT.INFO)
 
+if not (platform.system() == "Windows"):
+	print("You are running Elvex SOCIAL on "+str(platform.system())+" OS.", CT.ERROR)
+	print("Linux/Darwin are very limited right now, please use Windows to host Elvex SOCIAL for now.", CT.ERROR)
+	print("Server will start in 5 seconds...", CT.ERROR)
+	time.sleep(5)
+
+
 bufferSize = 1024
 config = configparser.ConfigParser()
 DefaultConfig = {}
@@ -107,23 +116,32 @@ except Exception:
 	print("Port "+Fore.CYAN+config['Connection']['port']+Fore.RESET+" is already in use.", CT.ERROR)
 	time.sleep(10)
 	os._exit(-1)
-print("Ready to listen.", CT.INFO)
-print("Server with name "+Fore.CYAN+config['Connection']['servername']+Fore.RESET+" was started!")
 try:
 	key = RSA.importKey(open('private.pem').read())
 	cipher = PKCS1_OAEP.new(key)
 except Exception:
-	print("Bad RSA key. Recreate it.", CT.ERROR)
+	print("Bad RSA key. Recreate it. Decryption was disabled.", CT.ERROR)
+	LockDecryption = True
 state=False
 
-decryptMessages = True
+if('LockDecryption' in locals()):
+	decryptMessages = False
+else:
+	LockDecryption = False
+	decryptMessages = True
 
 class trayActions:
 	def none():
 		AN = "AN"
 		del AN
+	def dashboardOpen():
+		webbrowser.open('http://localhost:55155', new=0, autoraise=True)
 	def switchDecryption():
 		global decryptMessages
+		global LockDecryption
+		if(LockDecryption):
+			print("This variable is locked by Elvex Security Protocol! You cannot change it, until the error fixed.", CT.ERROR)
+			return
 		decryptMessages = not decryptMessages
 		if(decryptMessages): print("Messages now decrypts when received!")
 		else: print("Messages now expected to be not encrypted.")
@@ -183,6 +201,13 @@ class trayActions:
 		conn.close()
 		print("DBs checking was finished!")
 
+if(PromoteFromWeb):
+	_ad = requests.get('https://act8team.com/elvexsocial/get_advertisment.php')
+	if _ad.status_code == 200 and not _ad.json()['response'] == None:
+		for ad in  _ad.json()['response']:
+			fprint(""+Fore.MAGENTA+'[ALERT] '+Fore.RESET+ad)
+
+
 @synchronized
 def IconCreate():
 	global TechWorkID
@@ -192,6 +217,7 @@ def IconCreate():
 	if(DisableTray): return
 	icon('elvex', Image.open(BytesIO(requests.get("https://avatars3.githubusercontent.com/u/56801454?s=400&u=0ca69763a92ebb07e3bcf1264d17eaed40682467&v=4").content)), menu=menu(
 		item('-- Elvex SOCIAL v'+str(version),trayActions.none, enabled=False),
+		item('Dashboard', trayActions.dashboardOpen),
 		item('Server settings', menu(
 			item('Decrypt messages', trayActions.switchDecryption, checked=lambda item: decryptMessages),
 			item("Maintenance", menu(
@@ -272,8 +298,10 @@ class HTTPHandler(BaseHTTPRequestHandler):
 				self.wfile.write("<h1>404 Not Found</h1><hr>This page doesn't exists. You will be redirected to the home page in 5 seconds.<script>window.onload = function(){ setTimeout(function(){ window.location.href = '/'; }, 5000); }</script>".encode())
 			return
 		except IOError:
-			self.send_response(404)
-			self.wfile.write("<h1>404 Not Found</h1><hr>This page doesn't exists. You will be redirected to the home page in 5 seconds.<script>window.onload = function(){ setTimeout(function(){ window.location.href = '/'; }, 5000); }</script>".encode())
+			self.set_error(404, "File Not Found.")
+			return
+	def do_POST(self):
+		return
 	def log_message(self, format, *args):
 		Logger("[HTTP] %s - - [%s] %s\n" % (self.address_string(),self.log_date_time_string(),format%args))
 		return
