@@ -586,13 +586,13 @@ def EditUser(username, what, how):
 	conn.close()
 	return "OK"
 
-def CreateCrate(item_code, key_item_code, loot_table):
+def CreateCrate(item_code, loot_table):
 	"""Creates a new crate."""
 	conn = sqlite3.connect('additional.db')
 	c = conn.cursor()
 	if not (is_json(loot_table)):
 		return "LOOTTABLE_NOT_JSON"
-	c.execute("INSERT INTO crates VALUES ('{}', '{}', '{}')".format(item_code,key_item_code,loot_table))
+	c.execute("INSERT INTO crates VALUES ('{}', '{}')".format(item_code,loot_table))
 	conn.commit()
 	conn.close()
 	return "OK"
@@ -968,7 +968,7 @@ if not (os.path.isfile("additional.db")):
 	conn = sqlite3.connect('additional.db')
 	c = conn.cursor()
 	c.execute('''CREATE TABLE crates
-             (item_code text, item_open_code text, items_in text)''')
+             (item_code text, items_in text)''')
 	c.execute('''CREATE TABLE shop_pool
              (item_code text, min_price int, max_price int)''')
 	c.execute('''CREATE TABLE shop_current

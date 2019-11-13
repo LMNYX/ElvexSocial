@@ -28,8 +28,6 @@ except:
 import requests
 from io import BytesIO
 import psutil
-import tkinter as tk
-from tkinter import simpledialog
 import argparse
 oprint("")
 
@@ -386,11 +384,24 @@ def IOelvex():
 									rm.SetOkResponse()
 					except Exception:
 						rm.SetError("INVALID_ARG")
-			elif(isMethod('vitya.isExists')):
-				if(GetUser("V1ktor") == "USER_GONE"):
-					rm.SetOkResponse()
+			elif(isMethod("crates.open")):
+				if(rm.isntArguments("inv_index", "login", "pswd")):
+					rm.SetError("NO_ARGS")
 				else:
-					rm.SetError("VITYA_PROHIBITED")
+					UserData = GetUser(rm.GetArgument("login"), False)
+					if not (UserData[1] == EStr(rm.GetArgument("pswd"))):
+						rm.SetError("WRONG_PASS")
+					else:
+						UserInventory = json.loads(UserData[5])
+						if(isCrate(UserInventory[rm.GetArgument("inv_index")])):
+							final_item = GetCrateItem(UserInventory[rm.GetArgument("inv_index")])
+							RemInvUser(rm.GetArgument("login"), rm.GetArgument("inv_index"))
+							AddInvUser(rm.GetArgument("login"), final_item)
+							rm.SetOkResponse({"result": final_item})
+						else:
+							rm.SetError("ISNT_CRATE")
+
+						
 			elif(isMethod('debug.raiseError')):
 				if(isDebugRun):
 					unkFunc()
