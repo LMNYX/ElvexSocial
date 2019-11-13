@@ -761,8 +761,25 @@ def GiveUserBadge(username, badge_code):
 	conn.close()
 	return "OK"
 
+
 BannedMethods = []
-MessageDelay = 0
+class VariableHandler(object):
+	def __init__(self):
+		self.Variables = {}
+		self.DefaultsSet()
+	def _set(self, varname, varcontent):
+		self.Variables[varname] = varcontent
+	def get(self, varname):
+		if(varname in self.Variables):
+			return self.Variables[varname]
+		return False
+	def DefaultsSet(self):
+		self._set("TechWorkID", -1)
+		self._set("MessageDelay", 0)
+
+if(__name__ == "elvex_module"):
+	vh = VariableHandler()
+
 class CommandHandler(object):
 	def __init__(self):
 		self.currentCmd = ""
@@ -772,10 +789,13 @@ class CommandHandler(object):
 			"stop": {"run": lambda: self.callFunc("stop"), "desc": "Stop the server.", "singleArg": False},
 			"togglemethod": {"run": lambda m: self.callFunc("togglemethod", m), "desc": "Toggles API method.", "singleArg": True},
 			"yee": {"run": lambda: self.callFunc("yee"), "desc": "yee haw", "singleArg": False, "unlisted": True},
-			"fakedelay": {"run": lambda i: self.callFunc("fakedelay", i), "desc": "Adds fake delay before answering.", "singleArg": False}
+			"vhlist": {"run": lambda: self.callFunc("vhlist"), "desc": "list all variables of variablehandler", "singleArg": False, "unlisted": True},
+			"fakedelay": {"run": lambda i: self.callFunc("fakedelay", i), "desc": "Adds fake delay before answering.", "singleArg": False},
+			"maintenance": {"run": lambda i: self.callFunc("maintenance", i), "desc": "Set maintenance mode to specific.", "singleArg": False}
 		}
 		return
 	def callFunc(self, cmd, *args):
+		global vh
 		if(cmd == "help"):
 			print("Currently there is "+Fore.CYAN+str(len(self.Commands))+Fore.RESET+" total commands.")
 			for cmd in self.Commands:
@@ -784,16 +804,24 @@ class CommandHandler(object):
 		elif(cmd == "stop"):
 			print("Server is shutting down...", CT.INFO)
 			os._exit(1)
+		elif(cmd == "maintenance"):
+			mid = int(args[0])
+			if(mid < -1 or mid > 2):
+				print("Wrong maintenance id.", CT.WARN)
+				return
+			vh._set("TechWorkID", mid)
+			ReasonNames = ["Disabled", "Maintenance", "Update", "Not Listed"]
+			CurrentReason = ReasonNames[mid+1]
+			print("Switched current maintenance state to "+Fore.CYAN+CurrentReason+Fore.RESET+".", CT.INFO)
 		elif(cmd == "fakedelay"):
-			global MessageDelay
 			try:
 				int(args[0])
 			except Exception as e:
 				print("Argument must be integer-type.", CT.ERROR)
 				return
 			
-			MessageDelay = int(args[0])
-			print("Set fake delay to "+Fore.CYAN+str(MessageDelay)+Fore.RESET+" seconds.")
+			vh._set("MessageDelay", int(args[0]))
+			print("Set fake delay to "+Fore.CYAN+str(vh.get("MessageDelay"))+Fore.RESET+" seconds.")
 		elif(cmd == "togglemethod"):
 			global BannedMethods
 			if(args[0] in BannedMethods):
@@ -804,6 +832,9 @@ class CommandHandler(object):
 				print("You disabled "+Fore.CYAN+args[0]+Fore.RESET+" method!", CT.INFO)
 		elif(cmd == "yee"):
 			print("haw")
+		elif(cmd == "vhlist"):
+			for v in vh.Variables:
+				print(str(v)+" = "+str(vh.Variables[v]))
 		return
 	def Run(self, fullcmd):
 		args = fullcmd.split(' ')
@@ -822,6 +853,9 @@ class CommandHandler(object):
 				print(str(e), CT.ERROR)
 		else:
 			print("No command named "+Fore.RED+cmd+Fore.RESET+" found. Use `help` to list all commands.")
+
+if(__name__ == "elvex_module"):
+	cmdhand = CommandHandler()
 
 # -- Debugger-only tools
 
