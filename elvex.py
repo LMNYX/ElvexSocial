@@ -67,7 +67,7 @@ if('version' not in config['Connection'] or int(config['Connection']['version'])
 print("Starting server on IP "+config['Connection']['serverip']+" with port "+config["Connection"]['port'], CT.INFO)
 server = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 if(config['Connection']['serverip'] == "127.0.0.1" or config['Connection']['serverip'] == ""):
-	config['Connection']['serverip'] == ""
+	config['Connection']['serverip'] = ""
 try:
 	server.bind((config['Connection']['serverip'], int(config['Connection']['port'])))
 except Exception:
