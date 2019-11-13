@@ -237,7 +237,7 @@ def IsUserExists(login):
 	"""Is user exists in Elvex DB?"""
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
-	r = c.execute("SELECT * FROM users WHERE username = '{}'".format(login))
+	r = c.execute("SELECT * FROM users WHERE lower(username) = '{}'".format(login.lower()))
 	if(r.fetchone()):
 		return True
 	else:
@@ -280,12 +280,12 @@ def RemoveUser(login):
 		return "USER_SPACE"
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
-	c.execute("UPDATE users SET accessible = false WHERE username = '{}'".format(login))
+	c.execute("UPDATE users SET accessible = false WHERE lower(username) = '{}'".format(login.lower()))
 	conn.commit()
 	conn.close()
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
-	c.execute("INSERT INTO bannednames VALUES ('{}')".format(login))
+	c.execute("INSERT INTO bannednames VALUES ('{}')".format(login.lower()))
 	conn.commit()
 	conn.close()
 	return "OK"
@@ -299,12 +299,12 @@ def RestoreUser(login):
 		return "USER_SPACE"
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
-	c.execute("UPDATE users SET accessible = true WHERE username = '{}'".format(login))
+	c.execute("UPDATE users SET accessible = true WHERE lower(username) = '{}'".format(login.lower()))
 	conn.commit()
 	conn.close()
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
-	c.execute("DELETE FROM bannednames WHERE name = '{}'".format(login))
+	c.execute("DELETE FROM bannednames WHERE name = '{}'".format(login.lower()))
 	conn.commit()
 	conn.close()
 	return "OK"
@@ -312,7 +312,7 @@ def IsAccessibleUser(username):
 	"""Is user profile accessible?"""
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
-	r = c.execute("SELECT accessible FROM users WHERE username = '{}'".format(username))
+	r = c.execute("SELECT accessible FROM users WHERE lower(username) = '{}'".format(username.lower()))
 	r = r.fetchone()
 	return bool(r[0])
 
@@ -334,8 +334,8 @@ def BanUser(login,reason = -1):
 		return "USER_SPACE"
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
-	c.execute("UPDATE users SET banned = true WHERE username = '{}'".format(login))
-	c.execute("UPDATE users SET ban_reason = {} WHERE username = '{}'".format(reason,login))
+	c.execute("UPDATE users SET banned = true WHERE lower(username) = '{}'".format(login.lower()))
+	c.execute("UPDATE users SET ban_reason = {} WHERE lower(username) = '{}'".format(reason,login.lower()))
 	conn.commit()
 	conn.close()
 	return "OK"
@@ -349,7 +349,7 @@ def UnbanUser(login):
 		return "USER_SPACE"
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
-	c.execute("UPDATE users SET banned = false WHERE username = '{}'".format(login))
+	c.execute("UPDATE users SET banned = false WHERE lower(username) = '{}'".format(login.lower()))
 	conn.commit()
 	conn.close()
 	return "OK"
@@ -384,7 +384,7 @@ def IsUserBanned(username):
 	"""Check if user is banned or no."""
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
-	a = c.execute("SELECT banned FROM users WHERE username = '{}'".format(username))
+	a = c.execute("SELECT banned FROM users WHERE lower(username) = '{}'".format(username.lower()))
 	a = bool(a.fetchone()[0])
 	conn.close()
 	return a
@@ -397,7 +397,7 @@ def GetBanReason(username):
 		return "USER_LAW"
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
-	a = c.execute("SELECT ban_reason FROM users WHERE username = '{}'".format(username))
+	a = c.execute("SELECT ban_reason FROM users WHERE lower(username) = '{}'".format(username.lower()))
 	a = a.fetchone()[0]
 	conn.close()
 	return a
@@ -417,10 +417,10 @@ def GetUser(username, safe = True):
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
 	if(safe):
-		a = c.execute("SELECT username, electricity,avatar, ppcount, inventory, customization, bio, stats, banned, badges FROM users WHERE username = '{}'".format(username))
+		a = c.execute("SELECT username, electricity,avatar, ppcount, inventory, customization, bio, stats, banned, badges FROM users WHERE lower(username) = '{}'".format(username.lower()))
 		a = a.fetchone()
 	else:
-		a = c.execute("SELECT username, passhash, electricity,avatar,ppcount, inventory, customization, bio, stats, banned, regip, badges FROM users WHERE username = '{}'".format(username))
+		a = c.execute("SELECT username, passhash, electricity,avatar,ppcount, inventory, customization, bio, stats, banned, regip, badges FROM users WHERE lower(username) = '{}'".format(username.lower()))
 		a = a.fetchone()
 	return a
 
@@ -442,11 +442,11 @@ def AddInvUser(username,item_code):
 		return "USER_SPACE"
 	conn = sqlite3.connect("users.db")
 	c = conn.cursor()
-	a = c.execute("SELECT inventory FROM users WHERE username = '{}'".format(username))
+	a = c.execute("SELECT inventory FROM users WHERE lower(username) = '{}'".format(username.lower()))
 	a = json.loads(a.fetchone()[0])
 	a.append(item_code)
 	a = json.dumps(a)
-	c.execute("UPDATE users SET inventory = '{}' WHERE username = '{}'".format(a,username))
+	c.execute("UPDATE users SET inventory = '{}' WHERE lower(username) = '{}'".format(a,username))
 	conn.commit()
 	conn.close()
 	return "OK"
@@ -460,11 +460,11 @@ def RemInvUser(username,index):
 		return "USER_SPACE"
 	conn = sqlite3.connect("users.db")
 	c = conn.cursor()
-	a = c.execute("SELECT inventory FROM users WHERE username = '{}'".format(username))
+	a = c.execute("SELECT inventory FROM users WHERE lower(username) = '{}'".format(username.lower()))
 	a = json.loads(a.fetchone()[0])
 	del a[index]
 	a = json.dumps(a)
-	c.execute("UPDATE users SET inventory = '{}' WHERE username = '{}'".format(a,username))
+	c.execute("UPDATE users SET inventory = '{}' WHERE lower(username) = '{}'".format(a,username))
 	conn.commit()
 	conn.close()
 	return "OK"
@@ -478,11 +478,11 @@ def SetCustomizationUser(username, n, h):
 		return "USER_SPACE"
 	conn = sqlite3.connect("users.db")
 	c = conn.cursor()
-	a = c.execute("SELECT customization FROM users WHERE username = '{}'".format(username))
+	a = c.execute("SELECT customization FROM users WHERE lower(username) = '{}'".format(username.lower()))
 	a = json.loads(a.fetchone()[0])
 	a[n] = h
 	a = json.dumps(a)
-	c.execute("UPDATE users SET customization = '{}' WHERE username = '{}'".format(a,username))
+	c.execute("UPDATE users SET customization = '{}' WHERE lower(username) = '{}'".format(a,username))
 	conn.commit()
 	conn.close()
 	return "OK"
@@ -499,12 +499,12 @@ def EditUserPassword(username, currentPass, newPass):
 		return "USER_SPACE"
 	conn = sqlite3.connect("users.db")
 	c = conn.cursor()
-	a = c.execute("SELECT passhash FROM users WHERE username = '{}'".format(username))
+	a = c.execute("SELECT passhash FROM users WHERE lower(username) = '{}'".format(username.lower()))
 	a = str(a.fetchone()[0])
 	if not(EStr(currentPass) == a):
 		return "USER_WRONG_HASH"
 	newPass = EStr(newPass)
-	c.execute("UPDATE users SET passhash = '{}' WHERE username = '{}'".format(newPass, username))
+	c.execute("UPDATE users SET passhash = '{}' WHERE lower(username) = '{}'".format(newPass, username))
 	conn.commit()
 	conn.close()
 	return "OK"
@@ -518,10 +518,10 @@ def UnsafeEditUserPassword(username, newPass):
 		return "USER_SPACE"
 	conn = sqlite3.connect("users.db")
 	c = conn.cursor()
-	a = c.execute("SELECT passhash FROM users WHERE username = '{}'".format(username))
+	a = c.execute("SELECT passhash FROM users WHERE lower(username) = '{}'".format(username.lower()))
 	a = str(a.fetchone()[0])
 	newPass = EStr(newPass)
-	c.execute("UPDATE users SET passhash = '{}' WHERE username = '{}'".format(newPass, username))
+	c.execute("UPDATE users SET passhash = '{}' WHERE lower(username) = '{}'".format(newPass, username))
 	conn.commit()
 	conn.close()
 	return "OK"
@@ -535,11 +535,11 @@ def ChangeUserStat(username,stat,to):
 		return "USER_SPACE"
 	conn = sqlite3.connect("users.db")
 	c = conn.cursor()
-	a = c.execute("SELECT stats FROM users WHERE username = '{}'".format(username))
+	a = c.execute("SELECT stats FROM users WHERE lower(username) = '{}'".format(username.lower()))
 	a = json.loads(a.fetchone()[0])
 	a[stat] = to
 	a = json.dumps(a)
-	c.execute("UPDATE users SET stats = '{}' WHERE username = '{}'".format(a,username))
+	c.execute("UPDATE users SET stats = '{}' WHERE lower(username) = '{}'".format(a,username))
 	conn.commit()
 	conn.close()
 	return "OK"
@@ -578,9 +578,9 @@ def EditUser(username, what, how):
 	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
 	if(what in stringlets):
-		c.execute("UPDATE users SET {} = '{}' WHERE username = '{}'".format(what,how,username))
+		c.execute("UPDATE users SET {} = '{}' WHERE lower(username) = '{}'".format(what,how,username))
 	else:
-		c.execute("UPDATE users SET {} = {} WHERE username = '{}'".format(what,how,username))
+		c.execute("UPDATE users SET {} = {} WHERE lower(username) = '{}'".format(what,how,username))
 	if(what in warners):
 		print(username+" just changed "+what+" to "+how,CT.WARN)
 	conn.commit()
@@ -740,7 +740,7 @@ def haveUserBadge(username, badge_code):
 	if not (IsUserExists(username)): return "USER_GONE"
 	conn = sqlite3.connect("users.db")
 	c = conn.cursor()
-	cr = c.execute("SELECT badges FROM users WHERE username = '{}'".format(username))
+	cr = c.execute("SELECT badges FROM users WHERE lower(username) = '{}'".format(username.lower()))
 	cr = json.loads(cr.fetchone()[0])
 	conn.close()
 	return badge_code in cr
@@ -753,7 +753,7 @@ def GiveUserBadge(username, badge_code):
 	c = conn.cursor()
 	userBadges = json.loads(GetUser(username)[9])
 	userBadges.append(badge_code)
-	c.execute('UPDATE users SET badges = "{}" WHERE username = "{}"'.format(userBadges, username))
+	c.execute('UPDATE users SET badges = "{}" WHERE lower(username) = "{}"'.format(userBadges, username))
 	conn.commit()
 	conn.close()
 	return "OK"
