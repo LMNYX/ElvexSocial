@@ -16,7 +16,6 @@ import traceback
 import subprocess
 import ssl
 import webbrowser
-import elvex_module
 import threading
 from binascii import a2b_base64
 from PIL import Image, ImageDraw
@@ -24,6 +23,7 @@ try:
 	from pystray import Icon as icon, Menu as menu, MenuItem as item
 	DisableTray = False
 except:
+	print("Tray was disabled.")
 	DisableTray = True
 import requests
 from io import BytesIO
@@ -31,19 +31,13 @@ import psutil
 import argparse
 oprint("")
 
+
 Logger("Python importing complete.", CT.INFO)
 
 init(autoreset=True)
 Logger("Colorama initialized.", CT.INFO)
 
 Logger("Elvex Social Server version "+str(version), CT.INFO)
-
-if not (platform.system() == "Windows"):
-	print("You are running Elvex SOCIAL on "+str(platform.system())+" OS.", CT.ERROR)
-	print("Linux/Darwin are very limited right now, please use Windows to host Elvex SOCIAL for now.", CT.ERROR)
-	print("Server will start in 5 seconds...", CT.ERROR)
-	time.sleep(5)
-
 
 bufferSize = 1024
 config = configparser.ConfigParser()
@@ -84,14 +78,14 @@ class trayActions:
 	def switchDecryption():
 		print("Deprecated method. Will be removed in v3 COMPLETELY.")
 	def switchTechWorks(s):
-		global TechWorkID
+		global vh
 		ReasonNames = ["Disabled", "Maintenance", "Update", "Not Listed"]
 		CurrentReason = ReasonNames[s+1]
 		print("Switched current maintenance state to "+Fore.CYAN+CurrentReason+Fore.RESET+".", CT.INFO)
-		TechWorkID = s
+		vh._set("TechWorkID",s)
 	def GetCheckedMaintenance(s):
-		global TechWorkID
-		return TechWorkID == s
+		global vh
+		return vh.get("TechWorkID") == s
 	def restart():
 		print("Restarting the Elvex SOCIAL server.", CT.WARN)
 		try:
@@ -148,7 +142,7 @@ if(PromoteFromWeb):
 
 @synchronized
 def IconCreate():
-	global TechWorkID
+	global vh
 	global trayActions
 	global icon
 	global DisableTray
@@ -181,15 +175,15 @@ class ResponseManager(object):
 		self.Responses = []
 	def SetError(self, error_code):
 		global Response
-		global MessageDelay
-		time.sleep(MessageDelay)
+		global vh
+		time.sleep(vh.get("MessageDelay"))
 		Response = EncodedString(json.dumps({'error': error_code}))
 		return True
 	def SetOkResponse(self,response_data = {}):
 		response_data['response'] = "OK"
 		global Response
-		global MessageDelay
-		time.sleep(MessageDelay)
+		global vh
+		time.sleep(vh.get("MessageDelay"))
 		Response = EncodedString(json.dumps(response_data))
 		return True
 	def isArgument(self, arg):
@@ -243,7 +237,6 @@ class HTTPHandler(BaseHTTPRequestHandler):
 		Logger("[HTTP] %s - - [%s] %s\n" % (self.address_string(),self.log_date_time_string(),format%args))
 		return
 
-TechWorkID = -1
 rm = ResponseManager()
 def HTTPAServer():
 	print("HTTP server started at 127.0.0.1:55155", CT.INFO)
@@ -256,7 +249,7 @@ def IOelvex():
 	global rm
 	global jsonMessage
 	global Response
-	global TechWorkID
+	global vh
 	isDebugRun = False
 	Response = ""
 	while(True):
@@ -406,10 +399,10 @@ def IOelvex():
 				if(isDebugRun):
 					unkFunc()
 			elif(isMethod('server.isAlive')):
-				if (TechWorkID == -1):
+				if (vh.get("TechWorkID") == -1):
 					rm.SetOkResponse({"alive": "alive", "server_name": config['Connection']['servername']})
 				else:
-					rm.SetOkResponse({"alive": "procedures", "tech_id": TechWorkID, "server_name": config['Connection']['servername']})
+					rm.SetOkResponse({"alive": "procedures", "tech_id": vh.get("TechWorkID"), "server_name": config['Connection']['servername']})
 			else:
 				rm.SetError("BAD_REQUEST")
 			server.sendto(Response, address)
@@ -419,11 +412,13 @@ def IOelvex():
 
 @synchronized
 def InputConsole():
+	global cmdhand
 	while (true):
 		sys.stdout.write('> ')
 		cmd = sys.stdin.readline()
 		cmd = cmd.split('\n')[0]
-		elvex_module.CommandHandler().Run(cmd)
+		
+		cmdhand.Run(cmd)
 
 TrayThread = threading.Thread(target=IconCreate)
 HTTPThread = threading.Thread(target=HTTPAServer)
