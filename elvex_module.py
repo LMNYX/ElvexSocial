@@ -198,6 +198,7 @@ def is_json(myjson):
 def LogPrint(stri,type = CT.NONE):
 	"""Print and add to log."""
 	global StartTime
+	stri = str(stri)
 	if(type == CT.NONE):
 		eprint("[NONE]" + Back.WHITE+Fore.BLACK + "["+strftime("%Y-%m-%d %H:%M:%S", gmtime())+"]"+Back.RESET+Fore.RESET+" "+stri)
 		with open("current.log", "a") as w:
