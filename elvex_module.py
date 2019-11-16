@@ -253,9 +253,9 @@ def AddUser(login, pswd, avatar = 0, electricity = 0, ppcount = 0.0, inventory =
 	if(IsUserExists(login)):
 		print("Creation user with username "+login+" failed. User already exists.", CT.ERROR)
 		return "USER_EXISTS"
-	if(strlen(login) < 4):
+	if(len(login) < 4):
 		return "USER_LEN"
-	if(strlen(pswd) < 6):
+	if(len(pswd) < 6):
 		return "PSWD_LEN"
 	if(login.isspace() or login == ""):
 		return "USER_SPACE"
