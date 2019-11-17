@@ -408,6 +408,7 @@ def GetBanReason(username):
 def GetUser(username, safe = True):
 	"""Get user by name."""
 	global isDebugger
+	username = username.lower()
 	if not (IsUserExists(username)):
 		print("Tried to get user, but user with that name doesn't exists. ("+username+")", CT.ERROR)
 		return "USER_GONE"

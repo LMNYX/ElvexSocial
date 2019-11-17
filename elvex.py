@@ -313,7 +313,7 @@ def IOelvex():
 						rm.SetError(r)
 					else:
 						r = r
-						rm.SetOkResponse({'{}'.format(rm.GetArgument("login")): {'login': r[0], 'avatar': r[1], 'electricity': r[2], 'pp': r[3], 'inventory': json.loads(r[4]), 'customization': json.loads(r[5]), 'bio': r[6], 'stats': json.loads(r[7]), 'banned': bool(r[8])}})
+						rm.SetOkResponse({'{}'.format("userdata"): {'login': r[0], 'avatar': r[1], 'electricity': r[2], 'pp': r[3], 'inventory': json.loads(r[4]), 'customization': json.loads(r[5]), 'bio': r[6], 'stats': json.loads(r[7]), 'banned': bool(r[8])}})
 			elif(isMethod("inventory.setCustomization")):
 				if(rm.isntArguments('login', 'pswd', 'slot', 'item')):
 					rm.SetError("NO_ARGS")
