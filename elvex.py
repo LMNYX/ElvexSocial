@@ -312,8 +312,10 @@ def IOelvex():
 					if(r == "USER_GONE" or r == "USER_SPACE"):
 						rm.SetError(r)
 					else:
-						r = r
-						rm.SetOkResponse({'{}'.format("userdata"): {'login': r[0], 'avatar': r[1], 'electricity': r[2], 'pp': r[3], 'inventory': json.loads(r[4]), 'customization': json.loads(r[5]), 'bio': r[6], 'stats': json.loads(r[7]), 'banned': bool(r[8])}})
+						try:
+							rm.SetOkResponse({'{}'.format("userdata"): {'login': r[0], 'avatar': r[1], 'electricity': r[2], 'pp': r[3], 'inventory': json.loads(r[4]), 'customization': json.loads(r[5]), 'bio': r[6], 'stats': json.loads(r[7]), 'banned': bool(r[8])}})
+						except Exception:
+							rm.SetError(r)
 			elif(isMethod("inventory.setCustomization")):
 				if(rm.isntArguments('login', 'pswd', 'slot', 'item')):
 					rm.SetError("NO_ARGS")
@@ -407,6 +409,7 @@ def IOelvex():
 				rm.SetError("BAD_REQUEST")
 			server.sendto(Response, address)
 		except Exception as e:
+			Logger("[EXCEPTION] "+str(e))
 			rm.SetError("EXCEPTION_TASK")
 			server.sendto(Response, address)
 
