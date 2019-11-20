@@ -313,7 +313,7 @@ def IOelvex():
 						rm.SetError(r)
 					else:
 						try:
-							rm.SetOkResponse({'{}'.format("userdata"): {'login': r[0], 'avatar': r[1], 'electricity': r[2], 'pp': r[3], 'inventory': json.loads(r[4]), 'customization': json.loads(r[5]), 'bio': r[6], 'stats': json.loads(r[7]), 'banned': bool(r[8])}})
+							rm.SetOkResponse({'{}'.format("userdata"): {'login': r[0], 'avatar': r[1], 'electricity': r[2], 'pp': r[3], 'inventory': json.loads(r[4]), 'customization': json.loads(r[5]), 'bio': r[6], 'stats': json.loads(r[7]), 'banned': bool(r[8]), 'badges': json.loads(r[9])}})
 						except Exception:
 							rm.SetError(r)
 			elif(isMethod("inventory.setCustomization")):
@@ -347,6 +347,24 @@ def IOelvex():
 							rm.SetOkResponse({'ban_reason': r})
 						else:
 							rm.SetError("UNKNOWN")
+			elif isMethod("account.redeemKey"):
+				if(rm.isntArguments("login", "pswd", "key")):
+					rm.SetError("NO_ARGS")
+				else:
+					r = GetUser(rm.GetArgument('login'), False)
+					if(type(r) == str):
+						rm.SetError(r)
+					elif(EStr(rm.GetArgument('pswd')) != r[1]):
+						rm.SetError("WRONG_PASS")
+					else:
+						if(isRedeemKey(rm.GetArgument("key"))):
+							a = UseRedeemKey(rm.GetArgument("login"), rm.GetArgument("key"))
+							if(a[0] == True):
+								rm.SetOkResponse({'redeem_type': a[1], "got": a[2]})
+							else:
+								rm.SetError(a[1])
+						else:
+							rm.SetError("WRONG_KEY")
 			elif(isMethod("market.get")):
 				rm.SetOkResponse({'items': GetStoreItems()})
 			elif isMethod("market.getTimer"):
@@ -405,10 +423,13 @@ def IOelvex():
 					rm.SetOkResponse({"alive": "alive", "server_name": config['Connection']['servername']})
 				else:
 					rm.SetOkResponse({"alive": "procedures", "tech_id": vh.get("TechWorkID"), "server_name": config['Connection']['servername']})
+			elif(isMethod("server.isAliveAuthenticated")):
+				rm.SetOkResponse()
 			else:
 				rm.SetError("BAD_REQUEST")
 			server.sendto(Response, address)
 		except Exception as e:
+			raise e
 			Logger("[EXCEPTION] "+str(e))
 			rm.SetError("EXCEPTION_TASK")
 			server.sendto(Response, address)

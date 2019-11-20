@@ -12,6 +12,7 @@ import platform
 import hmac
 import hashlib
 import base64
+import string
 import binascii
 import re
 import traceback
@@ -32,9 +33,9 @@ try:
 except:
 	subprocessUndefined = True
 	# that's fine.
-db_AdditionalsVer = 1
+db_AdditionalsVer = 2
 db_usersVer = 1
-version = 3
+version = 4
 
 oprint = print
 oopen = open
@@ -378,6 +379,7 @@ def FlushUsers():
 	c = conn.cursor()
 	c.execute("DELETE FROM users")
 	c.execute("DELETE FROM bannednames")
+	c.execute('''INSERT INTO users VALUES ('act8', '', 0, 1000000, 0, '[]', '\{\}', '', '\{\}', false, '', true, -1, '["badge_bot"]')''')
 	conn.commit()
 	conn.close()
 	print("Users were flushed.", CT.INFO)
@@ -427,6 +429,64 @@ def GetUser(username, safe = True):
 		a = c.execute("SELECT username, passhash, electricity,avatar,ppcount, inventory, customization, bio, stats, banned, regip, badges FROM users WHERE lower(username) = '{}'".format(username.lower()))
 		a = a.fetchone()
 	return a
+
+def AddRedeemKey(key, type_reedem, code):
+	conn = sqlite3.connect("additional.db")
+	c = conn.cursor()
+	c.execute('INSERT INTO item_keys VALUES ("'+str(key)+'", "'+str(type_reedem)+'", "'+str(code)+'")')
+	conn.commit()
+	conn.close()
+	return True
+
+def isRedeemKey(key):
+	conn = sqlite3.connect("additional.db")
+	c = conn.cursor()
+	r = c.execute('SELECT * FROM item_keys WHERE key = "'+key+'"')
+	if(r.fetchone()):
+		conn.close()
+		return True
+	else:
+		conn.close()
+		return False
+
+def RemoveReedemKey(key):
+	if not isRedeemKey(key): return False
+	conn = sqlite3.connect("additional.db")
+	c = conn.cursor()
+	r = c.execute('DELETE FROM item_keys WHERE key = "'+key+'"')
+	conn.commit()
+	conn.close()
+	return True
+
+def UseRedeemKey(user,key):
+	if not isRedeemKey(key): return False
+	conn = sqlite3.connect("additional.db")
+	c = conn.cursor()
+	r = c.execute('SELECT * FROM item_keys WHERE key = "'+key+'"')
+	r = r.fetchone()
+	if(r[1] == "item"):
+		AddInvUser(user, r[2])
+	elif(r[1] == "badge"):
+		triedOK = GiveUserBadge(user, r[2])
+		if(type(triedOK) == str):
+			return False, triedOK
+	else:
+		RemoveReedemKey(key)
+		return False, "WRONG_KEYTYPE"
+	RemoveReedemKey(key)
+	return True, r[1], r[2]
+
+def rndstr(stringLength=4):
+	letters = string.ascii_uppercase + string.digits
+	return ''.join(random.choice(letters) for i in range(stringLength))
+def rndostr(stringLength=4):
+	letters = string.ascii_uppercase
+	return ''.join(random.choice(letters) for i in range(stringLength))
+
+def GenerateRedeemKey(typer, code):
+	key = rndstr()+"-"+rndstr(3)+"-"+rndstr()+"-"+rndostr()
+	AddRedeemKey(key, typer, code)
+	return key
 
 # print(GetUserBalance("test"))
 
@@ -737,32 +797,30 @@ def GetCrateItem(crate_code):
 			a = ChanceTry(i[1])
 			if(a):
 				ItemCode_Result = i[0]
+	conn.close()
 	return ItemCode_Result
 
-def haveUserBadge(username, badge_code):
-	"""Check if user have badge in his profile."""
-	if not (IsUserExists(username)): return "USER_GONE"
-	conn = sqlite3.connect("users.db")
-	c = conn.cursor()
-	cr = c.execute("SELECT badges FROM users WHERE lower(username) = '{}'".format(username.lower()))
-	cr = json.loads(cr.fetchone()[0])
-	conn.close()
-	return badge_code in cr
+def haveUserBadge(user, badge):
+	if not IsUserExists(user): return "USER_GONE"
+	try:
+		uinv = json.loads(GetUser(user)[9])
+	except Exception:
+		return False
+	if(badge in uinv): return True
+	else: return False
 
-def GiveUserBadge(username, badge_code):
-	"""Add badge to user's profile."""
-	if not IsUserExists(username): return "USER_GONE"
-	if(haveUserBadge(username, badge_code)): return "OK"
-	conn = sqlite3.connect("users.db")
+def GiveUserBadge(user, badge):
+	if(haveUserBadge(user, badge)): return "BADGE_ALREADY"
+	conn = sqlite3.connect('users.db')
 	c = conn.cursor()
-	userBadges = json.loads(GetUser(username)[9])
-	userBadges.append(badge_code)
-	c.execute('UPDATE users SET badges = "{}" WHERE lower(username) = "{}"'.format(userBadges, username))
+	cr = c.execute("SELECT badges FROM users WHERE lower(username) = '{}'".format(user)).fetchone()[0]
+	cr = json.loads(cr)
+	cr.append(badge)
+	cr = json.dumps(cr)
+	cr = c.execute("UPDATE users SET badges=\'{}\' WHERE lower(username) = '{}'".format(cr,user))
 	conn.commit()
 	conn.close()
-	return "OK"
-
-
+	return True
 BannedMethods = []
 class VariableHandler(object):
 	def __init__(self):
@@ -994,6 +1052,7 @@ if not (os.path.isfile("users.db")):
 	c = conn.cursor()
 	c.execute('''CREATE TABLE users
              (username text, passhash text, avatar int, electricity int, ppcount float, inventory text, customization text, bio text, stats text, banned boolean, regip text, accessible boolean,ban_reason int, badges text)''')
+	c.execute('''INSERT INTO users VALUES ('act8', '', 0, 1000000, 0, '[]', '\{\}', '', '\{\}', false, '', true, -1, '["badge_bot"]')''')
 	c.execute('''CREATE TABLE bannednames
 		(name text)''')
 	c.execute('''CREATE TABLE db_info
@@ -1012,6 +1071,7 @@ if not (os.path.isfile("additional.db")):
              (item_code text, min_price int, max_price int)''')
 	c.execute('''CREATE TABLE shop_current
              (item_code text, price int)''')
+	c.execute('''CREATE TABLE item_keys (key text, type text, code text)''')
 	c.execute('''CREATE TABLE time_storage
              (sett text, unix int)''')
 	c.execute('''CREATE TABLE db_info
