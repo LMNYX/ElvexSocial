@@ -1,4 +1,0 @@
-help
-fakedelay 0
-fakedelay 1
-stop
