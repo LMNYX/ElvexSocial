@@ -119,8 +119,6 @@ errs = Social.Errors()
 
 #######################
 # Registering methods
-def ListMethods():
-	print("HELP!!!!!")
 soc.Method("dev.listmethods", "", mc.ListMethods)
 
 print("Everything is ready to start the server...")
