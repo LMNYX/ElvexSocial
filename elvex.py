@@ -11,6 +11,9 @@ def ContentDelivery_UserThread(conn, clientid, addr):
 		while True:
 			data = conn.recv(1024)
 			data = data.decode()
+			if('User-Agent:' in data):
+				conn.close()
+				return
 			if not data:
 				break
 			if not is_json(data):
@@ -25,14 +28,20 @@ def ContentDelivery_UserThread(conn, clientid, addr):
 				continue
 
 			if(data['method'] in soc.methods):
-				res = soc.methods[data['method']].RunCallback(**data['args'])
+				try:
+					# -1 due to `self` parameter
+					if(soc.methods[data['method']].callback.__code__.co_argcount-1  < len(data['args'])):
+						conn.sendall(errs.Drop("TOO_MANY_ARGS", clientData = data, clientIP = addr).encode());
+						continue
+					res = soc.methods[data['method']].RunCallback(**data['args'])
+				except Exception as e:
+					conn.sendall(errs.Drop("INTERNAL_ERROR", clientData = data, clientIP = addr, Additional = '**Error Exception**:\n`'+str(e)+'`').encode());
+					continue
 				conn.sendall(res.encode())
 			else:
 				conn.sendall(errs.Drop("INTERNAL_ERROR", clientData = data, clientIP = addr).encode())
-		print('[-] Client disconnected (%s)' % addr)
 		conn.close()
 	except ConnectionResetError:
-		print('[-] Client disconnected (%s)' % addr)
 		conn.close()
 	except Exception as e:
 		WebhookSend(server_settings.DISCORD_WEBHOOK, "", "ElvexSocial", [{
@@ -52,7 +61,7 @@ def ContentDelivery_UserThread(conn, clientid, addr):
 					},
 					{
 					"name": "Additional Information",
-					"value": "Nothing more."
+					"value": '**Error Exception**:\n`'+str(e)+'`'
 					}
 				]
 				}])
@@ -66,7 +75,6 @@ def ContentDelivery():
 		sock.listen(1)
 		while True:
 			conn, addr = sock.accept()
-			print('[+] Connection found with '+str(addr[0]))
 			ClientThreads[str(currthreadnum)] = Thread(target=ContentDelivery_UserThread, args=(conn,currthreadnum+1, addr[0],))
 			ClientThreads[str(currthreadnum)].start()
 			currthreadnum+=1

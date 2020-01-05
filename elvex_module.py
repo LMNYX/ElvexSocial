@@ -10,8 +10,12 @@ import requests
 import json
 import errno
 import pprint
+import psycopg2
 
+# DB connection
 
+db = psycopg2.connect(host=server_settings.DB_HOST, database="elvexsocial", user=server_settings.DB_USER, password=server_settings.DB_PASSWORD)
+dc = db.cursor()
 server_settings.PUBLIC_IP = requests.get("https://api.ipify.org/").text
 
 if(server_settings.DISCORD_WEBHOOK == ""):
@@ -30,11 +34,12 @@ def is_json(myjson):
   return True
 
 # PRINT OVERWRITTEN
-def print(msg, isLogger = True, newline=True):
-	if(newline):
-		msg =  msg + "\n" if newline else msg
+def print(msg, isLogger = True, end="\n"):
+	msg =  str(msg) + end
 	sys.stdout.write(msg)
 	return
+
+print("Log started at "+str(time.strftime("%Y-%m-%d %H:%M:%S",time.gmtime(time.time()))))
 
 class SocialHolder(object):
 	def __init__(self):
@@ -68,9 +73,10 @@ class Social(object):
 				"INTERNAL_ERROR": {"error": "INTERNAL_ERROR", "human_readable": "Something went wrong, we are not sure what, but we will investigate this!", "aum0b_readable": "01001000 01100101 01101100 01101100 01101111 00101100 00100000 01010111 01101111 01110010 01101100 01100100 00100001"},
 				"REQUIRED_JSON_REQUEST": {"error": "REQUIRED_JSON_REQUEST", "human_readable": "Request sent to server doesn't represent the JSON input."},
 				"PROVIDE_ARGS": {"error": "PROVIDE_ARGS", "human_readable": "Request sent to server doesn't have arguments."},
-				"PROVIDE_METHOD": {"error": "PROVIDE_METHOD", "human_readable": "Request sent to server doesn't have method."}
+				"PROVIDE_METHOD": {"error": "PROVIDE_METHOD", "human_readable": "Request sent to server doesn't have method."},
+				"TOO_MANY_ARGS": {"error": "TOO_MANY_ARGS", "human_readable": "In request, sent to server was provided too many arguments."}
 			}
-		def Drop(self, errname, selfDrop = False, clientData = {}, clientIP = ""):
+		def Drop(self, errname, selfDrop = False, clientData = {}, clientIP = "", Additional = ""):
 			if(errname not in self.Errors):
 				print("Hit Internal Error!")
 				self.Drop("INTERNAL_ERROR", True)
@@ -78,6 +84,7 @@ class Social(object):
 			AddInfo = ""
 			if(selfDrop): AddInfo += "This is **self-drop**!\n"
 			if(not clientData == {} and not clientIP == ""): AddInfo += "Client IP: `{0}`\nClient Request:\n```json\n{1}\n```\n".format(clientIP, clientData)
+			AddInfo = AddInfo + Additional
 			if(AddInfo == ""): AddInfo = "Nothing more."
 			WebhookSend(server_settings.DISCORD_WEBHOOK, "", "ElvexSocial", [{
 				"content": "Wild error approached in Content Delivery!\nPlease check.",
@@ -107,7 +114,6 @@ class MethodCallbacks(object):
 		return
 	def ListMethods(self):
 		global soc
-		print("Is it going thru?")
 		res = {}
 		for m in soc.methods:
 			res[m] = soc.methods[m].description
