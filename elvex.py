@@ -4,69 +4,8 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.bind((server_settings.SERVER_IP, server_settings.SERVER_PORT))
 print("Server \""+server_settings.SERVER_NAME+"\" started on port "+str(server_settings.SERVER_PORT)+". Waiting for connections!")
 
-# Message parser (Client => Server => Client)
-ClientThreads = {}
-def ContentDelivery_UserThread(conn, clientid, addr):
-	try:
-		while True:
-			data = conn.recv(1024)
-			data = data.decode()
-			if('User-Agent:' in data):
-				conn.close()
-				return
-			if not data:
-				break
-			if not is_json(data):
-				conn.sendall(errs.Drop("REQUIRED_JSON_REQUEST", clientData=data, clientIP = addr).encode())
-				continue
-			data = json.loads(data)
-			if('method' not in data):
-				conn.sendall(errs.Drop("PROVIDE_METHOD", clientData=data, clientIP = addr).encode())
-				continue
-			if('args' not in data):
-				conn.sendall(errs.Drop("PROVIDE_ARGS", clientData=data, clientIP = addr).encode())
-				continue
 
-			if(data['method'] in soc.methods):
-				try:
-					# -1 due to `self` parameter
-					if(soc.methods[data['method']].callback.__code__.co_argcount-1  < len(data['args'])):
-						conn.sendall(errs.Drop("TOO_MANY_ARGS", clientData = data, clientIP = addr).encode());
-						continue
-					res = soc.methods[data['method']].RunCallback(**data['args'])
-				except Exception as e:
-					conn.sendall(errs.Drop("INTERNAL_ERROR", clientData = data, clientIP = addr, Additional = '**Error Exception**:\n`'+str(e)+'`').encode());
-					continue
-				conn.sendall(res.encode())
-			else:
-				conn.sendall(errs.Drop("INTERNAL_ERROR", clientData = data, clientIP = addr).encode())
-		conn.close()
-	except ConnectionResetError:
-		conn.close()
-	except Exception as e:
-		WebhookSend(server_settings.DISCORD_WEBHOOK, "", "ElvexSocial", [{
-				"content": "@everyone Something wrong in ContentDeliveryPersonal sockets!\nPlease check.",
-				"title": "Error Exception",
-				"color": 13979446,
-				"timestamp": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime( time.time())),
-				"author": {
-					"name": "{0} ({1})".format(server_settings.SERVER_NAME, server_settings.SERVER_REGION),
-					"icon_url": "https://avatars2.githubusercontent.com/u/56801454?s=200&v=4",
-				},
-				"description": "Server is running on `{0}:{1}` ({2}:{1}).".format(server_settings.PUBLIC_IP, server_settings.SERVER_PORT, server_settings.SERVER_IP),
-				"fields": [
-					{
-					"name": str(e),
-					"value": "```json\n{0}\n```".format(str(e))
-					},
-					{
-					"name": "Additional Information",
-					"value": '**Error Exception**:\n`'+str(e)+'`'
-					}
-				]
-				}])
 def ContentDelivery():
-	global ClientThreads
 	global conn
 	global addr
 	global sock
@@ -75,8 +14,8 @@ def ContentDelivery():
 		sock.listen(1)
 		while True:
 			conn, addr = sock.accept()
-			ClientThreads[str(currthreadnum)] = Thread(target=ContentDelivery_UserThread, args=(conn,currthreadnum+1, addr[0],))
-			ClientThreads[str(currthreadnum)].start()
+			_n = cc.AddClient(conn,addr)
+			tryt = cc.GetClient(_n).StartThread()
 			currthreadnum+=1
 	except socket.error as e:
 		if(e.errno == errno.ECONNRESET):
