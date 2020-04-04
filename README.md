@@ -5,6 +5,10 @@ Official ELVEX SOCIAL server.
 * Python 3.7
 * SQLite3
 
+## This branch is deprecated
+This branch is deprecated. **Don't use it**. SQLite3 creates massive problems, also as my code do.
+Use @rewrite branch.
+
 ## Usage
 To start server use: `elvex.py`, to startup the administration console use `elvex.py debugger`.
 
